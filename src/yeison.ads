@@ -24,26 +24,39 @@ package Yeison with Preelaborate is
 
    function To_String_Value (S : Wide_Wide_String) return String_Value;
 
-   package Value_Holders is new Ada.Containers.Indefinite_Holders
-     (Abstract_Value'Class);
-
-   type Collection is new Value_Holders.Holder with null record with
+   type Collection is tagged private with
      Integer_Literal => To_Integer_Value,
      String_Literal =>  To_String_Value,
-     Aggregate => (Empty => Empty,
-                   Add_Unnamed => Append);
+     Aggregate => (Empty          => Empty,
+                   Add_Named      => Insert,
+                   Add_Unnamed    => Append);
 
-   function Empty return Collection
-   is (Collection'(Value_Holders.Empty_Holder with null record));
+   function Empty return Collection;
 
-   procedure Append (This : in out Collection; Value : Abstract_Value'Class);
+   procedure Append (This : in out Collection; Value : Collection);
+
+   procedure Insert (This  : in out Collection;
+                     Key   : String;
+                     Value : Collection);
 
    function To_Integer_Value (Image : String) return Collection;
    function To_String_Value  (Wide  : Wide_Wide_String) return Collection;
 
 private
 
+   package Value_Holders is new Ada.Containers.Indefinite_Holders
+     (Abstract_Value'Class);
+
+   type Collection is new Value_Holders.Holder with null record;
+
    use Ada.Strings;
+
+   -----------
+   -- Empty --
+   -----------
+
+   function Empty return Collection
+   is (Collection'(Value_Holders.Empty_Holder with null record));
 
    ----------------------
    -- To_Integer_Value --
