@@ -79,6 +79,7 @@ project Yeison is
         Contracts_Switches &
         ("-gnat2020", -- Enable 2020 features
          "-gnatx",   -- Enable experimental features
+         "-gnatwu",  -- Warn On Unused Entities
          "-gnatw.X", -- Disable warnings for No_Exception_Propagation
          "-gnatQ");  -- Don't quit. Generate ALI and tree files even if illegalities
    end Compiler;
