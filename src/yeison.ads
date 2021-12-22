@@ -3,11 +3,13 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Finalization;
 private with Ada.Strings.Unbounded;
 private with Ada.Numerics.Big_Numbers.Big_Integers;
+private with Ada.Numerics.Big_Numbers.Big_Reals;
 
 package Yeison with Preelaborate is
 
    type Abstract_Value is tagged private with
      Integer_Literal => To_Int,
+     Real_Literal    => To_Real,
      String_Literal  => To_Str;
 
    type Vec;
@@ -30,6 +32,7 @@ package Yeison with Preelaborate is
    subtype Any is Abstract_Value'Class;
 
    function To_Int (Img : String) return Abstract_Value;
+   function To_Real (Img : String) return Abstract_Value;
    function To_Str (Img : Wide_Wide_String) return Abstract_Value;
 
    type Bool is new Abstract_Value with private;
@@ -45,14 +48,17 @@ package Yeison with Preelaborate is
    overriding function Image (V : Int) return String;
 
    overriding function To_Int (S : String) return Int;
-   overriding function To_Str (S : Wide_Wide_String) return Int is (raise Constraint_Error);
+
+   type Real is new Abstract_Value with private
+     with Real_Literal => To_Real;
+
+   overriding function To_Real (Img : String) return Real;
 
    type Str is new Abstract_Value with private
      with String_Literal => To_Str;
 
    overriding function Image (V : Str) return String;
 
-   overriding function To_Int (S : String) return Str is (raise Constraint_Error);
    overriding function To_Str (Img : Wide_Wide_String) return Str;
 
    type Map is new Abstract_Value with private with
@@ -73,6 +79,7 @@ package Yeison with Preelaborate is
                      Value : Abstract_Value'Class);
 
    overriding function To_Int (S : String) return Map;
+   overriding function To_Real (Img : String) return Map;
    overriding function To_Str (S : Wide_Wide_String) return Map;
 
    type Vec is new Abstract_Value with private with
@@ -95,6 +102,7 @@ package Yeison with Preelaborate is
    function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index) return Const_Ref;
 
    overriding function To_Int (S : String) return Vec;
+   overriding function To_Real (Img : String) return Vec;
    overriding function To_Str (S : Wide_Wide_String) return Vec;
 
 private
@@ -113,6 +121,7 @@ private
    end record;
 
    overriding function To_Int (Img : String) return Bool is (raise Constraint_Error);
+   overriding function To_Real (Img : String) return Bool is (raise Constraint_Error);
    overriding function To_Str (S : Wide_Wide_String) return Bool is (raise Constraint_Error);
 
    function False return Bool is (Abstract_Value with Value => Standard.False);
@@ -122,9 +131,22 @@ private
       Value : Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
    end record;
 
+   overriding function To_Real (Img : String) return Int is (raise Constraint_Error);
+   overriding function To_Str (S : Wide_Wide_String) return Int is (raise Constraint_Error);
+
+   type Real is new Abstract_Value with record
+      Value : Ada.Numerics.Big_Numbers.Big_Reals.Big_Real;
+   end record;
+
+   overriding function To_Int (Img : String) return Real is (raise Constraint_Error);
+   overriding function To_Str (S : Wide_Wide_String) return Real is (raise Constraint_Error);
+
    type Str is new Abstract_Value with record
       Value : Ada.Strings.Unbounded.Unbounded_String;
    end record;
+
+   overriding function To_Int (S : String) return Str is (raise Constraint_Error);
+   overriding function To_Real (Img : String) return Str is (raise Constraint_Error);
 
    package Maps is new Ada.Containers.Indefinite_Ordered_Maps (String, Abstract_Value'Class);
 

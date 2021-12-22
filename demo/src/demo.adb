@@ -12,6 +12,12 @@ procedure Demo is
    A2 : constant Yeison.Str := "string";
    --  A string atom
 
+   A3 : constant Yeison.Bool := Yeison.True;
+   --  A Boolean atom
+
+   A4 : constant Yeison.Real := 3.14;
+   --  A real atom
+
    M1 : constant Yeison.Map := ("one" => A1, "two" => A2) with Unreferenced;
    --  A map initialized with yeison atoms
 
@@ -30,7 +36,7 @@ procedure Demo is
    V3 : constant Yeison.Vec := ("one", "two", "three") with Unreferenced;
    --  A vector initialized with string literals
 
-   V4 : constant Yeison.Vec := ("one", 2, "three");
+   V4 : constant Yeison.Vec := ("one", 2, "three", 4.0);
    --  A vector made of mixed atoms/literals
 
    M4 : constant Yeison.Map := ("one" => A1, "two" => 2, "three" => M3, "four" => V4);
