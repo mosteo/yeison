@@ -1,6 +1,9 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+--  with Ada.Tags;
 with Ada.Unchecked_Deallocation;
+
+--  with GNAT.IO; use GNAT.IO;
 
 package body Yeison is
 
@@ -17,6 +20,72 @@ package body Yeison is
          V.Concrete := new Abstract_Value'Class'(V.Concrete.all);
       end if;
    end Adjust;
+
+   ------------
+   -- As_Map --
+   ------------
+
+   function As_Map (This : Const_Ref) return access constant Map'Class
+   is (Map (This.Ptr.all)'Unchecked_Access);
+
+   function As_Map (This : Const_Ref; Key : String) return Const_Ref
+   is (Map (This.Ptr.all).Map_Constant_Reference (Key));
+
+   ---------------
+   -- As_String --
+   ---------------
+
+   function As_String (This : Abstract_Value'Class) return String
+   is (if This.Concrete /= null
+       then To_String (Str (This.Concrete.all).Value)
+       else To_String (Str (This).Value));
+
+   ------------
+   -- As_Vec --
+   ------------
+
+   function As_Vec (This : Const_Ref) return access constant Vec'Class
+   is (Vec (This.Ptr.all)'Unchecked_Access);
+
+   function As_Vec (This : Const_Ref; Index : Positive) return Const_Ref
+   is (Vec (This.Ptr.all).Vec_Constant_Reference (Index));
+
+   ------------------------
+   -- Constant_Reference --
+   ------------------------
+
+   function Map_Constant_Reference (This : Map'Class; Key : String) return Const_Ref
+   is
+   begin
+      return (Ptr => This.Value.Constant_Reference (Key).Element.all'Unchecked_Access);
+   end Map_Constant_Reference;
+
+   function Map_Constant_Reference (This : Map'Class; Keys : Vec'Class) return Const_Ref
+   is
+   begin
+      if Keys.Length = 1 then
+         return This (Keys.Value.First_Element.As_String);
+      else
+         declare
+            Remaining_Keys : Vec'Class := Keys;
+         begin
+            Remaining_Keys.Value.Delete_First;
+            return This.Map_Constant_Reference (Remaining_Keys);
+         end;
+      end if;
+   end Map_Constant_Reference;
+
+   function Vec_Constant_Reference (This : Vec'Class; Index : Positive) return Const_Ref
+   is
+   begin
+      return (Ptr => This.Value.Constant_Reference (Index).Element.all'Unchecked_Access);
+   end Vec_Constant_Reference;
+
+   function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index) return Const_Ref
+   is (if Indices'Length = 1
+       then This (Indices (Indices'First))
+       else Vec (This (Indices (Indices'First)).Ptr.all)
+       .Vec_Constant_Reference (Indices (Indices'First + 1 .. Indices'Last)));
 
    --------------
    -- Finalize --
@@ -41,6 +110,15 @@ package body Yeison is
       end if;
    end Image;
 
+   overriding function Image (V : Bool) return String is
+   begin
+      if V.Value then
+         return "True";
+      else
+         return "False";
+      end if;
+   end Image;
+
    overriding function Image (V : Int) return String is
    begin
       return Ada.Strings.Fixed.Trim
@@ -58,13 +136,13 @@ package body Yeison is
       Result : Unbounded_String := To_Unbounded_String ("(");
    begin
       for I in V.Value.Iterate loop
-         Append (Result, Key (I) & " => " & Element (I).Image);
+         Append (Result, """" & Key (I) & """" & " => " & Element (I).Image);
          if I /= V.Value.Last then
             Append (Result, ", ");
-         else
-            Append (Result, ")");
          end if;
       end loop;
+
+      Append (Result, ")");
 
       return To_String (Result);
    end Image;
@@ -84,6 +162,12 @@ package body Yeison is
 
       return To_String (Result);
    end Image;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (This : Vec) return Positive is (Positive (This.Value.Length));
 
    ------------
    -- To_Int --
@@ -159,21 +243,13 @@ package body Yeison is
    -- To_Int --
    ------------
 
-   overriding function To_Int (S : String) return Map is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "To_Int unimplemented");
-      return raise Program_Error with "Unimplemented function To_Int";
-   end To_Int;
+   overriding function To_Int (S : String) return Map is (raise Constraint_Error);
 
    ------------
    -- To_Str --
    ------------
 
-   overriding function To_Str (S : Wide_Wide_String) return Map is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "To_Str unimplemented");
-      return raise Program_Error with "Unimplemented function To_Str";
-   end To_Str;
+   overriding function To_Str (S : Wide_Wide_String) return Map is (raise Constraint_Error);
 
    -----------
    -- Empty --
@@ -199,8 +275,9 @@ package body Yeison is
 
    overriding function To_Int (S : String) return Vec is
    begin
-      pragma Compile_Time_Warning (Standard.True, "To_Int unimplemented");
-      return raise Program_Error with "Unimplemented function To_Int";
+      return Result : Vec do
+         Result.Append (Int'(To_Int (S)));
+      end return;
    end To_Int;
 
    ------------
@@ -209,8 +286,9 @@ package body Yeison is
 
    overriding function To_Str (S : Wide_Wide_String) return Vec is
    begin
-      pragma Compile_Time_Warning (Standard.True, "To_Str unimplemented");
-      return raise Program_Error with "Unimplemented function To_Str";
+      return Result : Vec do
+         Result.Append (Str'(To_Str (S)));
+      end return;
    end To_Str;
 
 end Yeison;
