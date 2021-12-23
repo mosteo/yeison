@@ -52,6 +52,8 @@ package Yeison with Preelaborate is
    type Real is new Abstract_Value with private
      with Real_Literal => To_Real;
 
+   overriding function Image (V : Real) return String;
+
    overriding function To_Real (Img : String) return Real;
 
    type Str is new Abstract_Value with private
@@ -153,6 +155,10 @@ private
    type Map is new Abstract_Value with record
       Value : Maps.map;
    end record;
+
+   overriding function To_Int (S : String) return Map is (raise Constraint_Error);
+   overriding function To_Real (Img : String) return Map is (raise Constraint_Error);
+   overriding function To_Str (S : Wide_Wide_String) return Map is (raise Constraint_Error);
 
    package Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Abstract_Value'Class);
 

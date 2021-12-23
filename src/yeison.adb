@@ -126,6 +126,13 @@ package body Yeison is
          Side => Ada.Strings.Both);
    end Image;
 
+   overriding function Image (V : Real) return String is
+   begin
+      return Ada.Strings.Fixed.Trim
+        (Ada.Numerics.Big_Numbers.Big_Reals.To_String (V.Value),
+         Side => Ada.Strings.Both);
+   end Image;
+
    overriding function Image (V : Str) return String is
    begin
       return """" &  To_String (V.Value) & """";
@@ -181,6 +188,18 @@ package body Yeison is
                   Value    => Ada.Numerics.Big_Numbers.Big_Integers.From_String (Img)));
    end To_Int;
 
+   -------------
+   -- To_Real --
+   -------------
+
+   function To_Real (Img : String) return Abstract_Value is
+   begin
+      return (Controlled with Concrete =>
+                 new Real'(Controlled with
+                  Concrete => null,
+                  Value    => Ada.Numerics.Big_Numbers.Big_Reals.From_String (Img)));
+   end To_Real;
+
    ------------
    -- To_Str --
    ------------
@@ -205,6 +224,17 @@ package body Yeison is
               Concrete => null,
               Value => Ada.Numerics.Big_Numbers.Big_Integers.From_String (S));
    end To_Int;
+
+   -------------
+   -- To_Real --
+   -------------
+
+   overriding function To_Real (Img : String) return Real is
+   begin
+      return (Controlled with
+              Concrete => null,
+              Value => Ada.Numerics.Big_Numbers.Big_Reals.From_String (Img));
+   end To_Real;
 
    ------------
    -- To_Str --
@@ -239,18 +269,6 @@ package body Yeison is
       This.Value.Insert (Key, Value);
    end Insert;
 
-   ------------
-   -- To_Int --
-   ------------
-
-   overriding function To_Int (S : String) return Map is (raise Constraint_Error);
-
-   ------------
-   -- To_Str --
-   ------------
-
-   overriding function To_Str (S : Wide_Wide_String) return Map is (raise Constraint_Error);
-
    -----------
    -- Empty --
    -----------
@@ -279,6 +297,13 @@ package body Yeison is
          Result.Append (Int'(To_Int (S)));
       end return;
    end To_Int;
+
+   overriding function To_Real (Img : String) return Vec is
+   begin
+      return Result : Vec do
+         Result.Append (Real'(To_Real (Img)));
+      end return;
+   end To_Real;
 
    ------------
    -- To_Str --
