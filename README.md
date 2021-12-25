@@ -1,4 +1,4 @@
-[![Alire indexed](https://img.shields.io/badge/alire-0.1.0-blue.svg)](https://alire.ada.dev)
+[![Alire indexed](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/yeison.json)](https://alire.ada.dev/crates/yeison)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 
@@ -13,7 +13,7 @@ requires the latest GNAT compiler you can find packaged in
 With this library, these kind of declarations are possible:
 
 ```Ada
-with Yeison; use Yeison;
+with Yeison;
 
 package Examples is
 
@@ -31,7 +31,7 @@ package Examples is
    --  With nested vectors and maps inside a root map
 
    M3     : constant Yeison.Map := ("one" => 1, 
-                                    "two" => Yeison'Map(2, Yeison'Vec(3, 4, 5)));
+                                    "two" => Yeison.Map'(2, Yeison.Vec'(3, 4, 5)));
    --  Inline initialization of nested structures
 
 end Examples;
