@@ -52,3 +52,14 @@ internally stores numbers as Big_Integers or Big_Reals, and strings as
 Unicode, so at least you do not have to worry about limits.
 
 Just another "because we can™" library by yours truly.
+
+# Using Yeison in your projects
+
+At the time Yeison has no dependencies, so you can download it and use it
+normally as any other GNAT project through the provided GPR project file.
+
+If using Alire, since it is not yet indexed, you can add it as a dependency of
+your project with 
+```
+alr with --use=https://github.com/mosteo/yeison.git
+```

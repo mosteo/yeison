@@ -1,7 +1,9 @@
 name = "yeison"
-description = "Shiny new project"
-version = "0.0.0"
+description = "A JSON-like data structure using Ada 2022 features"
+version = "0.1.0-dev"
 
 authors = ["Alejandro R. Mosteo"]
 maintainers = ["Alejandro R. Mosteo <alejandro@mosteo.com>"]
 maintainers-logins = ["mosteo"]
+tags = ["json", "container"]
+website = "https://github.com/mosteo/yeison"
