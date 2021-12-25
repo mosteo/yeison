@@ -27,10 +27,10 @@ package body Yeison_Classwide is
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (V : in out Abstract_Value) is
+   overriding procedure Adjust (V : in out Any) is
    begin
       if V.Concrete /= null then
-         V.Concrete := new Abstract_Value'Class'(V.Concrete.all);
+         V.Concrete := new Any'Class'(V.Concrete.all);
       end if;
    end Adjust;
 
@@ -38,18 +38,18 @@ package body Yeison_Classwide is
    -- As_Map --
    ------------
 
-   function As_Map (This : aliased Abstract_Value'Class) return access constant Map'Class
+   function As_Map (This : aliased Any'Class) return access constant Map'Class
    is (Map'Class (This)'Access);
 
-   function As_Map (This : Abstract_Value'Class; Key : String)
-                    return access constant Abstract_Value'Class
+   function As_Map (This : Any'Class; Key : String)
+                    return access constant Any'Class
    is (Map'Class (This).Map_Constant_Reference (Key));
 
    ---------------
    -- As_String --
    ---------------
 
-   function As_String (This : Abstract_Value'Class) return String
+   function As_String (This : Any'Class) return String
    is (if This.Concrete /= null
        then To_String (Str (This.Concrete.all).Value)
        else To_String (Str (This).Value));
@@ -58,11 +58,11 @@ package body Yeison_Classwide is
    -- As_Vec --
    ------------
 
-   function As_Vec (This : aliased Abstract_Value'Class) return access constant Vec'Class
+   function As_Vec (This : aliased Any'Class) return access constant Vec'Class
    is (Vec'Class (This)'Access);
 
-   function As_Vec (This : Abstract_Value'Class; Index : Positive)
-                    return access constant Abstract_Value'Class
+   function As_Vec (This : Any'Class; Index : Positive)
+                    return access constant Any'Class
    is (Vec'Class (This).Vec_Constant_Reference (Index));
 
    ------------------------
@@ -70,11 +70,11 @@ package body Yeison_Classwide is
    ------------------------
 
    function Map_Constant_Reference (This : Map'Class; Key : String)
-                                    return access constant Abstract_Value'Class
+                                    return access constant Any'Class
    is (This.Value.Constant_Reference (Key).Element);
 
    function Map_Constant_Reference (This : Map'Class; Keys : Vec'Class)
-                                    return access constant Abstract_Value'Class
+                                    return access constant Any'Class
    is
    begin
       if Keys.Length = 1 then
@@ -90,11 +90,11 @@ package body Yeison_Classwide is
    end Map_Constant_Reference;
 
    function Vec_Constant_Reference (This : Vec'Class; Index : Positive)
-                                    return access constant Abstract_Value'Class
+                                    return access constant Any'Class
    Is (This.Value.Constant_Reference (Index).Element);
 
    function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index)
-                                    return access constant Abstract_Value'Class
+                                    return access constant Any'Class
    is (if Indices'Length = 1
        then This (Indices (Indices'First))
        else Vec (This.Value.Constant_Reference (Indices (Indices'First)).Element.all)
@@ -104,8 +104,8 @@ package body Yeison_Classwide is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (V : in out Abstract_Value) is
-      procedure Free is new Ada.Unchecked_Deallocation (Abstract_Value'Class, Ptr);
+   overriding procedure Finalize (V : in out Any) is
+      procedure Free is new Ada.Unchecked_Deallocation (Any'Class, Ptr);
    begin
        Free (V.Concrete);
    end Finalize;
@@ -114,7 +114,7 @@ package body Yeison_Classwide is
    -- Image --
    -----------
 
-   function Image (V : Abstract_Value) return String is
+   function Image (V : Any) return String is
    begin
       if V.Concrete /= null then
          return V.Concrete.Image;
@@ -193,7 +193,7 @@ package body Yeison_Classwide is
    -- To_Int --
    ------------
 
-   function To_Int (Img : String) return Abstract_Value is
+   function To_Int (Img : String) return Any is
    begin
       return (Controlled with Concrete =>
                  new Int'(Controlled with
@@ -205,7 +205,7 @@ package body Yeison_Classwide is
    -- To_Real --
    -------------
 
-   function To_Real (Img : String) return Abstract_Value is
+   function To_Real (Img : String) return Any is
    begin
       return (Controlled with Concrete =>
                  new Real'(Controlled with
@@ -217,7 +217,7 @@ package body Yeison_Classwide is
    -- To_Str --
    ------------
 
-   function To_Str (Img : Wide_Wide_String) return Abstract_Value is
+   function To_Str (Img : Wide_Wide_String) return Any is
    begin
       return (Controlled with Concrete =>
                  new Str'(Controlled with
@@ -276,7 +276,7 @@ package body Yeison_Classwide is
    ------------
 
    procedure Insert
-     (This : in out Map; Key : String; Value : Abstract_Value'Class)
+     (This : in out Map; Key : String; Value : Any'Class)
    is
    begin
       This.Value.Insert (Key, Value);
@@ -295,7 +295,7 @@ package body Yeison_Classwide is
    -- Append --
    ------------
 
-   procedure Append (This : in out Vec; Value : Abstract_Value'Class) is
+   procedure Append (This : in out Vec; Value : Any'Class) is
    begin
       This.Value.Append (Value);
    end Append;

@@ -57,7 +57,7 @@ procedure Demo is
                                    "two" => M2));
    --  A vector with a nested vector/map. Same problem as with maps.
 
-   X0 : Yeison.Abstract_Value;
+   X0 : Yeison.Any;
 
    X1 : constant Yeison.Any'Class := 1;
    X2 : constant Yeison.Any'Class := "two";
