@@ -4,11 +4,13 @@
 
 # YEISON #
 
+Just another "because we can™" library by yours truly.
+
 Yeison is an heterogeneous container for general types, essentially equivalent
 to JSON, TOML, YAML text file representations. It is also an experiment on
-using new Ada 2022 features to enable simpler initializations. As such, it
-requires the latest GNAT compiler you can find packaged in
-[Alire](https://alire.ada.dev).
+using new Ada 2022 features to enable simpler initializations and pushing them
+to their limits. As such, it requires the latest GNAT compiler you can find
+packaged in [Alire](https://alire.ada.dev).
 
 With this library, these kind of declarations are possible:
 
@@ -37,6 +39,9 @@ package Examples is
 end Examples;
 ```
 
+More examples available in the `demo` subfolder (which is also an Alire crate
+so you can `alr run` it).
+
 Accessing the values in these containers is done with the usual notation but
 also relying on Yeison vectors for multilevel indexing:
 
@@ -47,11 +52,10 @@ pragma Assert (V2 ((1, 2))       = 2.0);
 pragma Assert (M2 (("map", "3")) = "three");
 ```
 
-Given the unlikely need for extreme efficiency in using this library, it
-internally stores numbers as Big_Integers or Big_Reals, and strings as
-Unicode, so at least you do not have to worry about limits.
-
-Just another "because we can™" library by yours truly.
+Since this library has not been conceived with extreme efficiency in mind, but
+to allow flexible use, it internally stores numbers as Big_Integers or
+Big_Reals, and strings as Unicode, so at least you do not have to worry about
+limits.
 
 # Using Yeison in your projects
 
@@ -61,5 +65,5 @@ normally as any other GNAT project through the provided GPR project file.
 If using Alire, since it is not yet indexed, you can add it as a dependency of
 your project with 
 ```
-alr with --use=https://github.com/mosteo/yeison.git
+alr with --use=https://github.com/mosteo/yeison
 ```
