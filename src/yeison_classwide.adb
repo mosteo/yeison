@@ -5,10 +5,23 @@ with Ada.Unchecked_Deallocation;
 
 --  with GNAT.IO; use GNAT.IO;
 
-package body Yeison is
+package body Yeison_Classwide is
 
    use Ada.Finalization;
    use Ada.Strings.Unbounded;
+
+   ---------------
+   -- Operators --
+   ---------------
+
+   package body Operators is
+
+      function "+" (This : Vec) return Vec is
+      begin
+         return Result : constant Vec := This;
+      end "+";
+
+   end Operators;
 
    ------------
    -- Adjust --
@@ -25,11 +38,12 @@ package body Yeison is
    -- As_Map --
    ------------
 
-   function As_Map (This : Const_Ref) return access constant Map'Class
-   is (Map (This.Ptr.all)'Unchecked_Access);
+   function As_Map (This : aliased Abstract_Value'Class) return access constant Map'Class
+   is (Map'Class (This)'Access);
 
-   function As_Map (This : Const_Ref; Key : String) return Const_Ref
-   is (Map (This.Ptr.all).Map_Constant_Reference (Key));
+   function As_Map (This : Abstract_Value'Class; Key : String)
+                    return access constant Abstract_Value'Class
+   is (Map'Class (This).Map_Constant_Reference (Key));
 
    ---------------
    -- As_String --
@@ -44,23 +58,23 @@ package body Yeison is
    -- As_Vec --
    ------------
 
-   function As_Vec (This : Const_Ref) return access constant Vec'Class
-   is (Vec (This.Ptr.all)'Unchecked_Access);
+   function As_Vec (This : aliased Abstract_Value'Class) return access constant Vec'Class
+   is (Vec'Class (This)'Access);
 
-   function As_Vec (This : Const_Ref; Index : Positive) return Const_Ref
-   is (Vec (This.Ptr.all).Vec_Constant_Reference (Index));
+   function As_Vec (This : Abstract_Value'Class; Index : Positive)
+                    return access constant Abstract_Value'Class
+   is (Vec'Class (This).Vec_Constant_Reference (Index));
 
    ------------------------
    -- Constant_Reference --
    ------------------------
 
-   function Map_Constant_Reference (This : Map'Class; Key : String) return Const_Ref
-   is
-   begin
-      return (Ptr => This.Value.Constant_Reference (Key).Element.all'Unchecked_Access);
-   end Map_Constant_Reference;
+   function Map_Constant_Reference (This : Map'Class; Key : String)
+                                    return access constant Abstract_Value'Class
+   is (This.Value.Constant_Reference (Key).Element);
 
-   function Map_Constant_Reference (This : Map'Class; Keys : Vec'Class) return Const_Ref
+   function Map_Constant_Reference (This : Map'Class; Keys : Vec'Class)
+                                    return access constant Abstract_Value'Class
    is
    begin
       if Keys.Length = 1 then
@@ -75,17 +89,16 @@ package body Yeison is
       end if;
    end Map_Constant_Reference;
 
-   function Vec_Constant_Reference (This : Vec'Class; Index : Positive) return Const_Ref
-   is
-   begin
-      return (Ptr => This.Value.Constant_Reference (Index).Element.all'Unchecked_Access);
-   end Vec_Constant_Reference;
+   function Vec_Constant_Reference (This : Vec'Class; Index : Positive)
+                                    return access constant Abstract_Value'Class
+   Is (This.Value.Constant_Reference (Index).Element);
 
-   function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index) return Const_Ref
+   function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index)
+                                    return access constant Abstract_Value'Class
    is (if Indices'Length = 1
        then This (Indices (Indices'First))
-       else Vec (This (Indices (Indices'First)).Ptr.all)
-       .Vec_Constant_Reference (Indices (Indices'First + 1 .. Indices'Last)));
+       else Vec (This.Value.Constant_Reference (Indices (Indices'First)).Element.all)
+              .Vec_Constant_Reference (Indices (Indices'First + 1 .. Indices'Last)));
 
    --------------
    -- Finalize --
@@ -94,7 +107,7 @@ package body Yeison is
    overriding procedure Finalize (V : in out Abstract_Value) is
       procedure Free is new Ada.Unchecked_Deallocation (Abstract_Value'Class, Ptr);
    begin
-      Free (V.Concrete);
+       Free (V.Concrete);
    end Finalize;
 
    -----------
@@ -316,4 +329,4 @@ package body Yeison is
       end return;
    end To_Str;
 
-end Yeison;
+end Yeison_Classwide;

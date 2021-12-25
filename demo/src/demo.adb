@@ -1,4 +1,4 @@
-with Yeison;
+with Yeison; use Yeison.Operators;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -86,7 +86,7 @@ begin
    Put_Line ("Map nested indexing: Crate (""depends-on"") (""aaa"") => "
              & Alire_Crate.Crate ("depends-on").As_Map ("aaa").Image);
    Put_Line ("Map nested indexing alt syntax: "
-             & M5 (Yeison.Vec'("two", "two")).Image);
+             & M5 (+("two", "two")).Image);
 
    Put_Line ("Vec indexing: V6 (1) = " & V6 (1).Image);
    Put_Line ("Vec nested indexing V6 (2) (2) = "
