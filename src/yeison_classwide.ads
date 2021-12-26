@@ -112,8 +112,8 @@ package Yeison_Classwide with Preelaborate is
    function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index)
                                     return access constant Any'Class;
 
-   --  function Vec_Constant_Reference (This : Vec; Indices : Vec'Class)
-   --                                   return not null access constant Any'Class;
+   function Get (This : Vec; Indices : Vec'Class)
+                 return not null access constant Any'Class;
 
    overriding function To_Int (S : String) return Vec;
    overriding function To_Real (Img : String) return Vec;

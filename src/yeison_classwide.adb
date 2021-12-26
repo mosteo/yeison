@@ -160,11 +160,15 @@ package body Yeison_Classwide is
    Is (This.Value.Constant_Reference (Index).Element);
 
    function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index)
-                                    return access constant Any'Class
+                 return access constant Any'Class
    is (if Indices'Length = 1
        then This (Indices (Indices'First))
        else Vec (This.Value.Constant_Reference (Indices (Indices'First)).Element.all)
               .Vec_Constant_Reference (Indices (Indices'First + 1 .. Indices'Last)));
+
+   function Get (This : Vec; Indices : Vec'Class)
+                 return not null access constant Any'Class
+   is (This.Constant_Reference (Indices));
 
    --------------
    -- Finalize --
