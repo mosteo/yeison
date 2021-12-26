@@ -58,6 +58,7 @@ procedure Demo_Single is
                                  "two" => M2));
    --  A vector with a nested vector/map. Same problem as with maps.
 
+   X0 : Yeison.Any;
    X1 : constant Yeison.Any := 1;
    X2 : constant Yeison.Any := "two";
    X3 : constant Yeison.Any := M4;
@@ -65,7 +66,15 @@ procedure Demo_Single is
    --  Storing any kind of value in a variable
 
 begin
+   X0 := 1;
+   Put_Line (X0.Image);
+   X0 := "one";
+   Put_Line (X0.Image);
+
    Put_Line (M1.Image);
    Put_Line (V1.Image);
    Put_Line (M5.Image);
+
+   Put_Line (M4 ("one").Image);
+   Put_Line (V6 (1).Image);
 end Demo_Single;

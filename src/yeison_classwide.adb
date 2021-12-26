@@ -1,6 +1,6 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
---  with Ada.Tags;
+with Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
 --  with GNAT.IO; use GNAT.IO;
@@ -21,6 +21,32 @@ package body Yeison_Classwide is
          return Result : constant Vec := This;
       end "+";
 
+      ---------
+      -- "/" --
+      ---------
+
+      function "/" (L : Any'Class; R : Any'Class) return Vec is
+      begin
+         if not R.Is_Scalar then
+            raise Constraint_Error with
+              "Only scalars are intended for indexing in paths built with '/'";
+         end if;
+
+         if L in Vec then
+            return Result : Vec := Vec (L) do
+               Result.Append (R);
+            end return;
+         elsif L.Is_Scalar then
+            return Result : Vec do
+               Result.Append (L);
+               Result.Append (R);
+            end return;
+         else
+            raise Constraint_Error with
+              "LHS in '/' is not a vector or scalar";
+         end if;
+      end "/";
+
    end Operators;
 
    ------------
@@ -33,6 +59,19 @@ package body Yeison_Classwide is
          V.Concrete := new Any'Class'(V.Concrete.all);
       end if;
    end Adjust;
+
+   ----------------
+   -- As_Integer --
+   ----------------
+
+   function As_Integer (This : Any'Class) return Integer is
+   begin
+      if This.Concrete /= null then
+         return This.Concrete.As_Integer;
+      else
+         return Ada.Numerics.Big_Numbers.Big_Integers.To_Integer (Int (This).Value);
+      end if;
+   end As_Integer;
 
    ------------
    -- As_Map --
@@ -69,25 +108,52 @@ package body Yeison_Classwide is
    -- Constant_Reference --
    ------------------------
 
+   function Constant_Reference (This : Any_Composite;
+                                Path : Vec)
+                                return not null access constant Any'Class
+   is
+   begin
+      if Path.Value.Is_Empty then
+         raise Constraint_Error with "Attempt to index with empty vector";
+      end if;
+
+      declare
+         Remaining_Keys : Vec := Path;
+         First_Key      : constant Any'Class := Path.Value.First_Element;
+         First          : access constant Any'Class;
+      begin
+         Remaining_Keys.Value.Delete_First;
+
+         if This in Map and then First_Key.Is_Str then
+            First := Map (This).Map_Constant_Reference (First_Key.As_String);
+         elsif This in Vec and then First_Key.Is_Int then
+            First := Vec (This).Vec_Constant_Reference (First_Key.As_Integer);
+         else
+            raise Constraint_Error with
+              "Mismatch between container and index: "
+              & "container is " & This.Tag & "; "
+              & "index is " & First_Key.Tag;
+         end if;
+
+         if Remaining_Keys.Value.Is_Empty then
+            return First;
+         else
+            return Constant_Reference (First.all, Remaining_Keys);
+         end if;
+      end;
+   end Constant_Reference;
+
+   ----------------------------
+   -- Map_Constant_Reference --
+   ----------------------------
+
    function Map_Constant_Reference (This : Map'Class; Key : String)
                                     return access constant Any'Class
    is (This.Value.Constant_Reference (Key).Element);
 
    function Map_Constant_Reference (This : Map'Class; Keys : Vec'Class)
                                     return access constant Any'Class
-   is
-   begin
-      if Keys.Length = 1 then
-         return This (Keys.Value.First_Element.As_String);
-      else
-         declare
-            Remaining_Keys : Vec'Class := Keys;
-         begin
-            Remaining_Keys.Value.Delete_First;
-            return This.Map_Constant_Reference (Remaining_Keys);
-         end;
-      end if;
-   end Map_Constant_Reference;
+   is (Constant_Reference (This, Keys));
 
    function Vec_Constant_Reference (This : Vec'Class; Index : Positive)
                                     return access constant Any'Class
@@ -183,11 +249,29 @@ package body Yeison_Classwide is
       return To_String (Result);
    end Image;
 
+   ---------------
+   -- Is_Scalar --
+   ---------------
+
+   function Is_Scalar (This : Any'Class) return Boolean is
+   begin
+      return
+        (This.Concrete /= null and then This.Concrete.Is_Scalar)
+        or else This in Bool | Int | Real | Str;
+   end Is_Scalar;
+
    ------------
    -- Length --
    ------------
 
    function Length (This : Vec) return Positive is (Positive (This.Value.Length));
+
+   ---------
+   -- Tag --
+   ---------
+
+   function Tag (This : Any'Class) return String
+   is (Ada.Tags.External_Tag (This'Tag));
 
    ------------
    -- To_Int --

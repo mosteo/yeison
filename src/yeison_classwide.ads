@@ -12,8 +12,13 @@ package Yeison_Classwide with Preelaborate is
      Real_Literal    => To_Real,
      String_Literal  => To_Str;
 
+   function Is_Scalar (This : Any'Class) return Boolean;
+
+   function Tag (This : Any'Class) return String;
+
    type Vec;
 
+   function As_Integer (This : Any'Class) return Integer;
    function As_String (This : Any'Class) return String;
 
    type Map;
@@ -59,6 +64,9 @@ package Yeison_Classwide with Preelaborate is
    overriding function Image (V : Str) return String;
 
    overriding function To_Str (Img : Wide_Wide_String) return Str;
+
+   subtype Any_Scalar is Any'Class with
+     Dynamic_Predicate => Any_Scalar in Bool | Int | Real | Str;
 
    type Map is new Any with private with
      Constant_Indexing       => Map_Constant_Reference,
@@ -108,19 +116,36 @@ package Yeison_Classwide with Preelaborate is
    overriding function To_Real (Img : String) return Vec;
    overriding function To_Str (S : Wide_Wide_String) return Vec;
 
+   subtype Any_Composite is Any'Class with
+     Dynamic_Predicate => Any_Composite in Map'Class | Vec'Class;
+
+   function Constant_Reference (This : Any_Composite;
+                                Path : Vec)
+                                return not null access constant Any'Class;
+
    package Operators is
 
       function "+" (This : Vec) return Vec with Inline_Always;
 
+      function "/" (L : Any'Class; R : Any'Class) return Vec;
+
    end Operators;
 
 private
+
+   type Multi_Keys is limited null record;
 
    type Ptr is access all Any'Class;
 
    type Any is new Ada.Finalization.Controlled with record
       Concrete : Ptr;
    end record;
+
+   function Is_Int (This : Any'Class) return Boolean
+   is (This in Int or else (This.Concrete /= null and then This.Concrete.all in Int));
+
+   function Is_Str (This : Any'Class) return Boolean
+   is (This in Str or else (This.Concrete /= null and then This.Concrete.all in Str));
 
    overriding procedure Adjust (V : in out Any);
    overriding procedure Finalize (V : in out Any);
