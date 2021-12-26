@@ -108,7 +108,7 @@ package body Yeison_Classwide is
    -- Constant_Reference --
    ------------------------
 
-   function Constant_Reference (This : Any_Composite;
+   function Constant_Reference (This : Any'Class;
                                 Path : Vec)
                                 return not null access constant Any'Class
    is

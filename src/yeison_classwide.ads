@@ -112,6 +112,9 @@ package Yeison_Classwide with Preelaborate is
    function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index)
                                     return access constant Any'Class;
 
+   --  function Vec_Constant_Reference (This : Vec; Indices : Vec'Class)
+   --                                   return not null access constant Any'Class;
+
    overriding function To_Int (S : String) return Vec;
    overriding function To_Real (Img : String) return Vec;
    overriding function To_Str (S : Wide_Wide_String) return Vec;
@@ -119,7 +122,7 @@ package Yeison_Classwide with Preelaborate is
    subtype Any_Composite is Any'Class with
      Dynamic_Predicate => Any_Composite in Map'Class | Vec'Class;
 
-   function Constant_Reference (This : Any_Composite;
+   function Constant_Reference (This : Any'Class;
                                 Path : Vec)
                                 return not null access constant Any'Class;
 

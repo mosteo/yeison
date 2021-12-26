@@ -105,6 +105,7 @@ begin
    Put_Line ("Vec nested indexing V6 (2) (2) = "
              & V6 (2).As_Vec (2).Image);
    Put_Line ("Vec nested indexing alt syntax V6 ((2, 2)) = " & V6 ((2, 2)).Image);
+   --  Put_Line ("Vec mixed indexing: " & V6 (3 / "one").Image);
 
    Put_Line ("Real image: " & A4.Image);
 end Demo;
