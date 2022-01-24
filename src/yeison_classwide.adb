@@ -77,12 +77,14 @@ package body Yeison_Classwide is
    -- As_Map --
    ------------
 
-   function As_Map (This : aliased Any'Class) return access constant Map'Class
-   is (Map'Class (This)'Access);
+   function As_Map (This : Any'Class) return access constant Map'Class
+   is (if This.Concrete /= null
+       then raise Program_Error with "inner pointer should never be not null for maps"
+       else Map'Class (This)'Unchecked_Access);
 
    function As_Map (This : Any'Class; Key : String)
                     return access constant Any'Class
-   is (Map'Class (This).Map_Constant_Reference (Key));
+   is (Map'Class (This).Constant_Reference (Key));
 
    ---------------
    -- As_String --
@@ -97,19 +99,35 @@ package body Yeison_Classwide is
    -- As_Vec --
    ------------
 
-   function As_Vec (This : aliased Any'Class) return access constant Vec'Class
-   is (Vec'Class (This)'Access);
+   function As_Vec (This : Any'Class) return access constant Vec'Class
+   is (if This.Concrete /= null
+       then raise Program_Error with "inner pointer should never be not null for vecs"
+       else Vec'Class (This)'Unchecked_Access);
 
    function As_Vec (This : Any'Class; Index : Positive)
                     return access constant Any'Class
-   is (Vec'Class (This).Vec_Constant_Reference (Index));
+   is (Vec'Class (This).Constant_Reference (Index));
 
    ------------------------
    -- Constant_Reference --
    ------------------------
 
+   function Constant_Reference (This : Any'Class; Pos : Positive)
+                                return access constant Any'Class
+   is (if This.Is_Vec
+       then This.As_Vec.Value.Constant_Reference (Pos).Element
+       else raise Constraint_Error with
+         "Attemp to index into a non-vector, container is " & This.Tag);
+
+   function Constant_Reference (This : Any'Class; Key : String)
+                                return access constant Any'Class
+   is (if This.Is_Map
+       then This.As_Map.Value.Constant_Reference (Key).Element
+       else raise Constraint_Error with
+         "Attemp to select from a non-map, container is " & This.Tag);
+
    function Constant_Reference (This : Any'Class;
-                                Path : Vec)
+                                Path : Vec'Class)
                                 return not null access constant Any'Class
    is
    begin
@@ -118,16 +136,16 @@ package body Yeison_Classwide is
       end if;
 
       declare
-         Remaining_Keys : Vec := Path;
+         Remaining_Keys : Vec'Class := Path;
          First_Key      : constant Any'Class := Path.Value.First_Element;
          First          : access constant Any'Class;
       begin
          Remaining_Keys.Value.Delete_First;
 
          if This in Map and then First_Key.Is_Str then
-            First := Map (This).Map_Constant_Reference (First_Key.As_String);
+            First := Map (This).Constant_Reference (First_Key.As_String);
          elsif This in Vec and then First_Key.Is_Int then
-            First := Vec (This).Vec_Constant_Reference (First_Key.As_Integer);
+            First := Vec (This).Constant_Reference (First_Key.As_Integer);
          else
             raise Constraint_Error with
               "Mismatch between container and index: "
@@ -143,28 +161,9 @@ package body Yeison_Classwide is
       end;
    end Constant_Reference;
 
-   ----------------------------
-   -- Map_Constant_Reference --
-   ----------------------------
-
-   function Map_Constant_Reference (This : Map'Class; Key : String)
-                                    return access constant Any'Class
-   is (This.Value.Constant_Reference (Key).Element);
-
-   function Map_Constant_Reference (This : Map'Class; Keys : Vec'Class)
-                                    return access constant Any'Class
-   is (Constant_Reference (This, Keys));
-
-   function Vec_Constant_Reference (This : Vec'Class; Index : Positive)
-                                    return access constant Any'Class
-   Is (This.Value.Constant_Reference (Index).Element);
-
-   function Vec_Constant_Reference (This : Vec'Class; Indices : Multi_Dim_Index)
-                 return access constant Any'Class
-   is (if Indices'Length = 1
-       then This (Indices (Indices'First))
-       else Vec (This.Value.Constant_Reference (Indices (Indices'First)).Element.all)
-              .Vec_Constant_Reference (Indices (Indices'First + 1 .. Indices'Last)));
+   ---------
+   -- Get --
+   ---------
 
    function Get (This : Vec; Indices : Vec'Class)
                  return not null access constant Any'Class

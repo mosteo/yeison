@@ -93,18 +93,18 @@ begin
              & Alire_Crate.Crate ("depends-on").As_Map ("aaa").Image);
 
    Put_Line ("Map nested indexing alt syntax: "
-             & M5 (Yeison.Vec'("two", "two")).Image);
-   Put_Line ("Map nested indexing alt syntax '+': "
-             & M5 (+("two", "two")).Image);
+             & M5 ("two")("two").Image);
+
    Put_Line ("Map nested indexing alt alt syntax: " & M5 ("two" / "two").Image);
 
-   Put_Line ("Map nested mixed indexing: " & M6 (Yeison.Vec'("zri", 2)).Image);
+   Put_Line ("Nested mixed indexing alt: " & M6 ("zri")(2)("one").Image);
+   Put_Line ("Map nested indexing w vec: " & M6 (Yeison.Vec'("zri", 2)).Image);
    Put_Line ("Nested mixed indexing alt: " & M6 ("zri" / 2 / "one").Image);
 
    Put_Line ("Vec indexing: V6 (1) = " & V6 (1).Image);
    Put_Line ("Vec nested indexing V6 (2) (2) = "
              & V6 (2).As_Vec (2).Image);
-   Put_Line ("Vec nested indexing alt syntax V6 ((2, 2)) = " & V6 ((2, 2)).Image);
+   Put_Line ("Vec nested indexing alt syntax V6 ((2, 2)) = " & V6 (2)(2).Image);
    Put_Line ("Vec mixed indexing: " & V6.Get (3 / "one").Image);
 
    Put_Line ("Real image: " & A4.Image);
