@@ -1,9 +1,9 @@
 name = "yeison"
 description = "A JSON-like data structure using Ada 2022 features"
-version = "0.1.0-dev"
+version = "0.1.0"
 
 authors = ["Alejandro R. Mosteo"]
 maintainers = ["Alejandro R. Mosteo <alejandro@mosteo.com>"]
 maintainers-logins = ["mosteo"]
-tags = ["json", "container"]
+tags = ["json", "yaml", "toml", "containers"]
 website = "https://github.com/mosteo/yeison"
