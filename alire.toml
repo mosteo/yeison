@@ -1,6 +1,7 @@
 name = "yeison"
 description = "A JSON-like data structure using Ada 2022 features"
 version = "0.1.0"
+licenses = "MIT"
 
 authors = ["Alejandro R. Mosteo"]
 maintainers = ["Alejandro R. Mosteo <alejandro@mosteo.com>"]
