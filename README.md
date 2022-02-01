@@ -48,7 +48,9 @@ also relying on Yeison vectors for multilevel indexing:
 ```Ada
 pragma Assert (Vector (2)        = 2.0);
 pragma Assert (Map ("3")         = "three");
+pragma Assert (V2  (1)(2)        = 2.0);
 pragma Assert (V2 ((1, 2))       = 2.0);
+pragma Assert (M2  ("map")("3")  = "three");
 pragma Assert (M2 (("map", "3")) = "three");
 ```
 
