@@ -1,4 +1,4 @@
-package Yeison_Profiles is
+package Yeison_Experiments is
 
    --  Test the use of several function profiles with a single aspect
 
@@ -28,4 +28,4 @@ private
 
    type List is tagged null record;
 
-end Yeison_Profiles;
+end Yeison_Experiments;

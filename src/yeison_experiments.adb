@@ -1,6 +1,6 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Yeison_Profiles is
+package body Yeison_Experiments is
 
    ------------
    -- Append --
@@ -20,4 +20,4 @@ package body Yeison_Profiles is
       Put_Line ("Append String " & S);
    end Append;
 
-end Yeison_Profiles;
+end Yeison_Experiments;

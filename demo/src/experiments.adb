@@ -1,8 +1,8 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-with Yeison_Profiles; use Yeison_Profiles;
+with Yeison_Experiments; use Yeison_Experiments;
 
-procedure Demo_Profiles is
+procedure Experiments is
 
    LS : constant List := ("a", "b", "c");
 
@@ -11,4 +11,4 @@ procedure Demo_Profiles is
 
 begin
    null;
-end Demo_Profiles;
+end Experiments;
