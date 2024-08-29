@@ -6,7 +6,7 @@ authors = ["Alejandro R. Mosteo"]
 maintainers = ["Alejandro R. Mosteo <alejandro@mosteo.com>"]
 maintainers-logins = ["mosteo"]
 
-executables = ["demo"]
+executables = ["demo", "demo_single", "experiments"]
 
 [[depends-on]]
 yeison = "*"

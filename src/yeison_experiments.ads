@@ -7,7 +7,7 @@ package Yeison_Experiments is
        (Empty => Empty,
         Add_Unnamed => Append);
 
-   function Empty return List is (null record);
+   function Empty return List is [];
 
    procedure Append (L : in out List; I : Integer);
 

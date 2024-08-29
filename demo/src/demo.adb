@@ -18,49 +18,49 @@ procedure Demo is
    A4 : constant Yeison.Real := 3.14;
    --  A real atom
 
-   M1 : constant Yeison.Map := ("one" => A1, "two" => A2) with Unreferenced;
+   M1 : constant Yeison.Map := ["one" => A1, "two" => A2] with Unreferenced;
    --  A map initialized with yeison atoms
 
-   M2 : constant Yeison.Map := ("one" => 1, "two" => "two");
+   M2 : constant Yeison.Map := ["one" => 1, "two" => "two"];
    --  A map initialized with literals
 
-   M3 : constant Yeison.Map := ("one" => A1, "two" => "two", "three" => M2);
+   M3 : constant Yeison.Map := ["one" => A1, "two" => "two", "three" => M2];
    --  A map containing other maps
 
-   V1 : constant Yeison.Vec := (A1, A2) with Unreferenced;
+   V1 : constant Yeison.Vec := [A1, A2] with Unreferenced;
    --  A vector initialized with atoms
 
-   V2 : constant Yeison.Vec := (1, 2, 3) with Unreferenced;
+   V2 : constant Yeison.Vec := [1, 2, 3] with Unreferenced;
    --  A vector initialized with integer literals
 
-   V3 : constant Yeison.Vec := ("one", "two", "three") with Unreferenced;
+   V3 : constant Yeison.Vec := ["one", "two", "three"] with Unreferenced;
    --  A vector initialized with string literals
 
-   V4 : constant Yeison.Vec := ("one", 2, "three", 4.0);
+   V4 : constant Yeison.Vec := ["one", 2, "three", 4.0];
    --  A vector made of mixed atoms/literals
 
-   M4 : constant Yeison.Map := ("one" => A1, "two" => 2, "three" => M3, "four" => V4);
+   M4 : constant Yeison.Map := ["one" => A1, "two" => 2, "three" => M3, "four" => V4];
    --  A map initialized with all kinds of elements
 
-   V5 : constant Yeison.Vec := (A1, 2, M3, V4, "five");
+   V5 : constant Yeison.Vec := [A1, 2, M3, V4, "five"];
    --  A vector initialized with all kinds of elements
 
-   M5 : constant Yeison.Map := ("one" => 1,
-                                "two" => Yeison.Map'("two"   => 2,
-                                                     "three" => M3),
-                                "zri" => Yeison.Vec'(1, 2, 3));
+   M5 : constant Yeison.Map := ["one" => 1,
+                                "two" => Yeison.Map'["two"   => 2,
+                                                     "three" => M3],
+                                "zri" => Yeison.Vec'[1, 2, 3]];
    --  Inline declaration of nested maps/vectors. Unfortunately the qualification is mandatory.
 
-   M6 : constant Yeison.Map := ("one" => 1,
-                                "two" => Yeison.Map'("two"   => 2,
-                                                     "three" => M3),
-                                "zri" => Yeison.Vec'(1, M2, 3));
+   M6 : constant Yeison.Map := ["one" => 1,
+                                "two" => Yeison.Map'["two"   => 2,
+                                                     "three" => M3],
+                                "zri" => Yeison.Vec'[1, M2, 3]];
    --  Inline declaration of nested maps/vectors. Unfortunately the qualification is mandatory.
 
-   V6 : constant Yeison.Vec := (1,
-                       Yeison.Vec'(1, 2),
-                       Yeison.Map'("one" => 1,
-                                   "two" => M2));
+   V6 : constant Yeison.Vec := [1,
+                       Yeison.Vec'[1, 2],
+                       Yeison.Map'["one" => 1,
+                                   "two" => M2]];
    --  A vector with a nested vector/map. Same problem as with maps.
 
    X0 : Yeison.Any;
@@ -98,7 +98,7 @@ begin
    Put_Line ("Map nested indexing alt alt syntax: " & M5 ("two" / "two").Image);
 
    Put_Line ("Nested mixed indexing alt: " & M6 ("zri")(2)("one").Image);
-   Put_Line ("Map nested indexing w vec: " & M6 (Yeison.Vec'("zri", 2)).Image);
+   Put_Line ("Map nested indexing w vec: " & M6 (Yeison.Vec'["zri", 2]).Image);
    Put_Line ("Nested mixed indexing alt: " & M6 ("zri" / 2 / "one").Image);
 
    Put_Line ("Vec indexing: V6 (1) = " & V6 (1).Image);
