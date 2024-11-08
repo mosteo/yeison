@@ -10,7 +10,7 @@ tags = ["json", "yaml", "toml", "containers"]
 website = "https://github.com/mosteo/yeison"
 
 [build-switches]
-"*".ada_version = "Ada2022"
+"*".ada_version = "gnat_extensions"
 
 [[depends-on]]
 daseot = "~0.1.0"
