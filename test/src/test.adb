@@ -62,6 +62,12 @@ begin
    Report ("homo vec", Vec ([1, 2, 3]));
    Report ("hetero vec", Vec ([1, "two", 3]));
 
+   declare
+      V : Any;
+   begin
+      V (1) := "one";
+   end;
+
    --  References
 
    declare

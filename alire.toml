@@ -10,10 +10,10 @@ tags = ["json", "yaml", "toml", "containers"]
 website = "https://github.com/mosteo/yeison"
 
 [build-switches]
-"*".ada_version = "gnat_extensions"
+"*".ada_version = "Ada2022"
 
 [[depends-on]]
-daseot = "~0.1.0"
+compare_to_case = "*"
 
 [[pins]]
-daseot = { path='../daseot' }
+compare_to_case = { path='../compare_to_case' }
