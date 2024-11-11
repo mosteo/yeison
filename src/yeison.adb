@@ -118,7 +118,114 @@ package body Yeison is
    -- Image --
    -----------
 
-   function Image (This : Any) return String is (This'Image);
+   function Image (This : Any) return String is
+      use Ada.Strings.Unbounded;
+      function "+" (S : String) return Unbounded_String
+                    renames To_Unbounded_String;
+
+      Result : Unbounded_String;
+
+      --------------
+      -- Traverse --
+      --------------
+
+      procedure Traverse (This   : Node'Class;
+                          Prefix : String;
+                          Contd  : Boolean := False)
+      is
+         NL  : constant Character := ASCII.LF;
+         Tab : constant String := "   ";
+         function WS (Str : String) return String
+         is (1 .. Str'Length => ' ');
+      begin
+         case This.Kind is
+            when Atom_Kind =>
+               for E of This loop -- Only one, but we test the iterator so
+                  Append (Result,
+                          (if Contd then "" else Prefix) & Image (E.Get));
+               end loop;
+
+            when Dict_Kind =>
+               declare
+                  Real : Real_Node renames Real_Node (This.Ptr.all);
+                  C    : Node_Maps.Cursor := Real.Data.Dict.First;
+                  use Node_Maps;
+                  Abbr : constant Boolean :=
+                           Compact and then Real.Data.Dict.Length in 1;
+               begin
+                  if Real.Data.Dict.Is_Empty then
+                     Append (Result,
+                             (if Contd then "" else Prefix) & "{}");
+                     return;
+                  end if;
+
+                  Append (Result,
+                          (if Contd then "" else Prefix)
+                          & "{"
+                          & (if Abbr then ' ' else NL));
+
+                  while Has_Element (C) loop
+                     Append (Result,
+                             (if Abbr then " " else Prefix & Tab)
+                             & Key (C) & " : ");
+                     Traverse (Real.Data.Dict.Reference (C).Ref,
+                               WS (Prefix & Tab & Key (C) & " : "),
+                               Contd => True);
+                     if not Abbr then
+                        Append (Result, NL);
+                     end if;
+                     C := Next (C);
+                  end loop;
+
+                  Append (Result,
+                          (if Abbr then " " else Prefix) & "}");
+               end;
+
+            when List_Kind =>
+               declare
+                  Real : Real_Node renames Real_Node (This.Ptr.all);
+                  Abbr : constant Boolean :=
+                           Compact and then Real.Data.List.Length in 1;
+                  I    : Natural := 0;
+               begin
+                  if Real.Data.List.Is_Empty then
+                     Append (Result,
+                             (if Contd then "" else Prefix) & "[]");
+                     return;
+                  end if;
+
+                  Append (Result,
+                          (if Contd then "" else Prefix)
+                          & "["
+                          & (if Abbr then ' ' else NL));
+
+                  for E of This loop
+                     Traverse (E,
+                               Prefix & Tab,
+                               Contd => Abbr);
+                     I := I + 1;
+                     Append (Result,
+                             (if I = Natural (Real.Data.List.Length)
+                              then ""
+                              else ",")
+                             & (if Abbr then ' ' else NL));
+                  end loop;
+                  Append (Result,
+                          (if Abbr then " " else Prefix)
+                          & "]");
+               end;
+         end case;
+      end Traverse;
+
+   begin
+      if This.Is_Empty then
+         Result := +"(empty)";
+      else
+         Traverse (This.R.Root.Constant_Reference.Ref, "");
+      end if;
+
+      return To_String (Result);
+   end Image;
 
    -------------
    -- Invalid --
@@ -323,18 +430,17 @@ package body Yeison is
                return This.Impl.Map.Constant_Reference (Pos).Self;
 
             when others =>
-               if This.Impl.Vec.Length + 1 < Pos.As_Integer then
-                  raise Constraint_Error with
-                    "cannot index vector beyond 'length + 1 when pos ="
-                    & Pos.Image & " and 'length ="
-                    & This.Impl.Vec.Length'Image;
+               if Integer (This.Impl.Vec.Length) + 1 < Pos.As_Int then
+                  Constraint_Error
+                    ("vector beyond 'length + 1 when 'length ="
+                    & This.Impl.Vec.Length'Image, Pos);
                end if;
 
-               if This.Impl.Vec.Length < Pos.As_Integer then
+               if Integer (This.Impl.Vec.Length) < Pos.As_Int then
                   This.Impl.Vec.Append (Invalid);
                end if;
 
-               return This.Impl.Vec.Constant_Reference (Pos.As_Integer).Self;
+               return This.Impl.Vec.Constant_Reference (Pos.As_Int).Self;
          end case;
       end Ref_By_Scalar;
 
