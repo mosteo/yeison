@@ -1,5 +1,7 @@
+with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Unchecked_Deallocation;
 
 --  with Compare_To_Case;
@@ -118,58 +120,74 @@ package body Yeison is
    -- Image --
    -----------
 
-   function Image (This : Any) return String is
-      use Ada.Strings.Unbounded;
-      function "+" (S : String) return Unbounded_String
-                    renames To_Unbounded_String;
+   function Image (This : Any; Compact : Boolean := False) return Text is
+      use Ada.Strings.Wide_Wide_Unbounded;
+      function "+" (S : Wide_Wide_String) return WWUString
+                    renames To_Unbounded_Wide_Wide_String;
 
-      Result : Unbounded_String;
+      ------------------
+      -- Scalar_Image --
+      ------------------
+
+      function Scalar_Image (This : Any) return Text
+      is (case This.Kind is
+             when Bool_Kind => This.Impl.Bool'Wide_Wide_Image,
+             when Int_Kind  => This.Impl.Int'Wide_Wide_Image,
+             when Real_Kind => This.Impl.Real'Wide_Wide_Image,
+             when Str_Kind  => To_Wide_Wide_String (This.Impl.Str),
+             when Composite_Kinds =>
+                raise Program_Error with "not a scalar: " & This.Kind'Image
+         );
+
+      Result : WWUString;
 
       --------------
       -- Traverse --
       --------------
 
-      procedure Traverse (This   : Node'Class;
-                          Prefix : String;
+      procedure Traverse (This   : Any;
+                          Prefix : Text;
                           Contd  : Boolean := False)
       is
-         NL  : constant Character := ASCII.LF;
-         Tab : constant String := "   ";
-         function WS (Str : String) return String
-         is (1 .. Str'Length => ' ');
+         NL  : constant Text := "" & Ada.Characters.Wide_Wide_Latin_1.LF;
+         Tab : constant Text := "   ";
+         function WS (Str : Text) return Text
+         is ([1 .. Str'Length => ' ']);
       begin
          case This.Kind is
-            when Atom_Kind =>
-               for E of This loop -- Only one, but we test the iterator so
-                  Append (Result,
-                          (if Contd then "" else Prefix) & Image (E.Get));
-               end loop;
+            when Scalar_Kinds =>
+               Append (Result,
+                       (if Contd then Text'("") else Prefix)
+                        & Scalar_Image (This));
 
-            when Dict_Kind =>
+            when Map_Kind =>
                declare
-                  Real : Real_Node renames Real_Node (This.Ptr.all);
-                  C    : Node_Maps.Cursor := Real.Data.Dict.First;
-                  use Node_Maps;
+                  C : Any_Maps.Cursor := This.Impl.Map.First;
+                  use Any_Maps;
                   Abbr : constant Boolean :=
-                           Compact and then Real.Data.Dict.Length in 1;
+                           Compact and then This.Impl.Map.Length in 1;
                begin
-                  if Real.Data.Dict.Is_Empty then
+                  if This.Impl.Map.Is_Empty then
                      Append (Result,
-                             (if Contd then "" else Prefix) & "{}");
+                             (if Contd then "" else Prefix) & "[=>]");
                      return;
                   end if;
 
                   Append (Result,
                           (if Contd then "" else Prefix)
-                          & "{"
-                          & (if Abbr then ' ' else NL));
+                          & "["
+                          & (if Abbr then " " else NL));
 
                   while Has_Element (C) loop
                      Append (Result,
                              (if Abbr then " " else Prefix & Tab)
-                             & Key (C) & " : ");
-                     Traverse (Real.Data.Dict.Reference (C).Ref,
-                               WS (Prefix & Tab & Key (C) & " : "),
+                             & Key (C).Image (Compact) & " => ");
+                     --  TODO: the above key image should be prefixed in case
+                     --  we are using an object for indexing.
+
+                     Traverse (This.Impl.Map.Constant_Reference (C),
+                               WS (Prefix & Tab & Key (C).Image (Compact)
+                                 & " => "),
                                Contd => True);
                      if not Abbr then
                         Append (Result, NL);
@@ -178,37 +196,36 @@ package body Yeison is
                   end loop;
 
                   Append (Result,
-                          (if Abbr then " " else Prefix) & "}");
+                          (if Abbr then " " else Prefix) & "]");
                end;
 
-            when List_Kind =>
+            when Vec_Kind =>
                declare
-                  Real : Real_Node renames Real_Node (This.Ptr.all);
                   Abbr : constant Boolean :=
-                           Compact and then Real.Data.List.Length in 1;
+                           Compact and then This.Impl.Vec.Length in 1;
                   I    : Natural := 0;
                begin
-                  if Real.Data.List.Is_Empty then
+                  if This.Impl.Vec.Is_Empty then
                      Append (Result,
-                             (if Contd then "" else Prefix) & "[]");
+                             (if Contd then "" else Prefix) & "[,]");
                      return;
                   end if;
 
                   Append (Result,
                           (if Contd then "" else Prefix)
                           & "["
-                          & (if Abbr then ' ' else NL));
+                          & (if Abbr then " " else NL));
 
-                  for E of This loop
+                  for E of This.Impl.Vec loop
                      Traverse (E,
                                Prefix & Tab,
                                Contd => Abbr);
                      I := I + 1;
                      Append (Result,
-                             (if I = Natural (Real.Data.List.Length)
+                             (if I = Natural (This.Impl.Vec.Length)
                               then ""
                               else ",")
-                             & (if Abbr then ' ' else NL));
+                             & (if Abbr then " " else NL));
                   end loop;
                   Append (Result,
                           (if Abbr then " " else Prefix)
@@ -218,13 +235,13 @@ package body Yeison is
       end Traverse;
 
    begin
-      if This.Is_Empty then
-         Result := +"(empty)";
+      if not This.Is_Valid then
+         Result := +"(invalid)";
       else
-         Traverse (This.R.Root.Constant_Reference.Ref, "");
+         Traverse (This, "");
       end if;
 
-      return To_String (Result);
+      return To_Wide_Wide_String (Result);
    end Image;
 
    -------------
@@ -387,9 +404,11 @@ package body Yeison is
       ----------------------
 
       procedure Constraint_Error (Msg : String; Pos : Any) is
+         use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
       begin
          raise Standard.Constraint_Error
-           with "cannot index " & Msg & " when index is " & Pos.Image;
+           with "cannot index " & Msg & " when index is "
+           & Encode (Pos.Image);
       end Constraint_Error;
 
       ------------------
@@ -461,6 +480,10 @@ package body Yeison is
    -- True --
    ----------
 
-   function True return Any is (raise Unimplemented);
+   function True return Any
+   is (Any_Parent with
+         Impl => new Any_Impl'
+           (Kind => Bool_Kind,
+            Bool => True));
 
 end Yeison;

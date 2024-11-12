@@ -15,6 +15,8 @@ package Yeison with Preelaborate is
 
    subtype Scalar_Kinds is Kinds range Kinds'First .. Kinds'Pred (Map_Kind);
 
+   subtype Composite_Kinds is Kinds range Map_Kind .. Kinds'Last;
+
    subtype Text is Wide_Wide_String;
 
    type Any is new Ada.Finalization.Controlled with private with
@@ -37,8 +39,7 @@ package Yeison with Preelaborate is
    --  Common  --
    --------------
 
-   function Image (This : Any) return String;
-   --  UTF-8-encoded
+   function Image (This : Any; Compact : Boolean := False) return Text;
 
    function Invalid return Any;
    --  An uninitialized Any; using it as the RHS of assignments will fail

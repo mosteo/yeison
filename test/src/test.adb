@@ -1,3 +1,6 @@
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+use  Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
 with GNAT.IO; use GNAT.IO;
 
 with Yeison; use Yeison;
@@ -15,7 +18,7 @@ procedure Test is
       else
          Put_Line (Label & " (INVALID):");
       end if;
-      Put_Line (Value'Image);
+      Put_Line (Encode (Value.Image));
       New_Line;
    end Report;
 
@@ -23,6 +26,10 @@ procedure Test is
 
 begin
    Report ("empty", Yeison.Invalid);
+
+   --  Bool scalars
+
+   Report ("literal bool", True);
 
    --  Int scalars
 
