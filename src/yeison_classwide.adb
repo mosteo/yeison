@@ -2,6 +2,7 @@ with Ada.Strings.Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Tags;
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Latin_1;
 
 --  with GNAT.IO; use GNAT.IO;
 
@@ -251,6 +252,161 @@ package body Yeison_Classwide is
 
       return To_String (Result);
    end Image;
+
+   ----------------
+   -- JSON_Image --
+   ----------------
+
+   function JSON_Image (V : Any) return String is
+   begin
+      if V.Concrete /= null then
+         return V.Concrete.JSON_Image;
+      else
+         return "null";
+      end if;
+   end JSON_Image;
+
+   overriding function JSON_Image (V : Bool) return String is
+   begin
+      if V.Value then
+         return "true";
+      else
+         return "false";
+      end if;
+   end JSON_Image;
+
+   overriding function JSON_Image (V : Int) return String is
+   begin
+      return Ada.Strings.Fixed.Trim
+        (Ada.Numerics.Big_Numbers.Big_Integers.To_String (V.Value),
+         Side => Ada.Strings.Both);
+   end JSON_Image;
+
+   overriding function JSON_Image (V : Real) return String is
+   begin
+      return Ada.Strings.Fixed.Trim
+        (Ada.Numerics.Big_Numbers.Big_Reals.To_String (V.Value),
+         Side => Ada.Strings.Both);
+   end JSON_Image;
+
+   overriding function JSON_Image (V : Str) return String is
+      Result : Unbounded_String := To_Unbounded_String ("""");
+   begin
+      for C of To_String (V.Value) loop
+         case C is
+            when Character'Val (16#00#) =>
+               Append (Result, "\u0000");
+            when Character'Val (16#01#) =>
+               Append (Result, "\u0001");
+            when Character'Val (16#02#) =>
+               Append (Result, "\u0002");
+            when Character'Val (16#03#) =>
+               Append (Result, "\u0003");
+            when Character'Val (16#04#) =>
+               Append (Result, "\u0004");
+            when Character'Val (16#05#) =>
+               Append (Result, "\u0005");
+            when Character'Val (16#06#) =>
+               Append (Result, "\u0006");
+            when Character'Val (16#07#) =>
+               Append (Result, "\u0007");
+            when Ada.Characters.Latin_1.BS =>
+               Append (Result, "\b");
+            when Ada.Characters.Latin_1.HT =>
+               Append (Result, "\t");
+            when Ada.Characters.Latin_1.LF =>
+               Append (Result, "\n");
+            when Character'Val (16#0B#) =>
+               Append (Result, "\u000B");
+            when Ada.Characters.Latin_1.FF =>
+               Append (Result, "\f");
+            when Ada.Characters.Latin_1.CR =>
+               Append (Result, "\r");
+            when Character'Val (16#0E#) =>
+               Append (Result, "\u000E");
+            when Character'Val (16#0F#) =>
+               Append (Result, "\u000F");
+            when Character'Val (16#10#) =>
+               Append (Result, "\u0010");
+            when Character'Val (16#11#) =>
+               Append (Result, "\u0011");
+            when Character'Val (16#12#) =>
+               Append (Result, "\u0012");
+            when Character'Val (16#13#) =>
+               Append (Result, "\u0013");
+            when Character'Val (16#14#) =>
+               Append (Result, "\u0014");
+            when Character'Val (16#15#) =>
+               Append (Result, "\u0015");
+            when Character'Val (16#16#) =>
+               Append (Result, "\u0016");
+            when Character'Val (16#17#) =>
+               Append (Result, "\u0017");
+            when Character'Val (16#18#) =>
+               Append (Result, "\u0018");
+            when Character'Val (16#19#) =>
+               Append (Result, "\u0019");
+            when Character'Val (16#1A#) =>
+               Append (Result, "\u001A");
+            when Character'Val (16#1B#) =>
+               Append (Result, "\u001B");
+            when Character'Val (16#1C#) =>
+               Append (Result, "\u001C");
+            when Character'Val (16#1D#) =>
+               Append (Result, "\u001D");
+            when Character'Val (16#1E#) =>
+               Append (Result, "\u001E");
+            when Character'Val (16#1F#) =>
+               Append (Result, "\u001F");
+            when '\' =>
+               Append (Result, "\\");
+            when '"' =>
+               Append (Result, "\""");
+            when others =>
+               Append (Result, C);
+         end case;
+      end loop;
+
+      Append (Result, """");
+
+      return To_String (Result);
+   end JSON_Image;
+
+   overriding function JSON_Image (V : Map) return String is
+      use Maps;
+      Result : Unbounded_String := To_Unbounded_String ("{");
+   begin
+      for I in V.Value.Iterate loop
+         Append (Result,
+                 Str'(Controlled with
+                      Concrete => null,
+                      Value => To_Unbounded_String (Key (I))).JSON_Image &
+                   ":" & Element (I).JSON_Image);
+         if I /= V.Value.Last then
+            Append (Result, ",");
+         end if;
+      end loop;
+
+      Append (Result, "}");
+
+      return To_String (Result);
+   end JSON_Image;
+
+   overriding function JSON_Image (V : Vec) return String is
+      use Vectors;
+      Result : Unbounded_String := To_Unbounded_String ("[");
+   begin
+      for I in V.Value.Iterate loop
+         Append (Result, Element (I).JSON_Image);
+         if I /= V.Value.Last then
+            Append (Result, ",");
+         else
+            Append (Result, "]");
+         end if;
+      end loop;
+
+      return To_String (Result);
+   end JSON_Image;
 
    ---------------
    -- Is_Scalar --
