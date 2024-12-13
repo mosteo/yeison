@@ -42,6 +42,7 @@ package Yeison_Classwide with Preelaborate is
                     return access constant Any'Class;
 
    function Image (V : Any) return String;
+   function JSON_Image (V : Any) return String;
 
    function To_Int (Img : String) return Any;
    function To_Real (Img : String) return Any;
@@ -53,11 +54,13 @@ package Yeison_Classwide with Preelaborate is
    function True return Bool;
 
    overriding function Image (V : Bool) return String;
+   overriding function JSON_Image (V : Bool) return String;
 
    type Int is new Any with private with
      Integer_Literal => To_Int;
 
    overriding function Image (V : Int) return String;
+   overriding function JSON_Image (V : Int) return String;
 
    overriding function To_Int (S : String) return Int;
 
@@ -65,6 +68,7 @@ package Yeison_Classwide with Preelaborate is
      with Real_Literal => To_Real;
 
    overriding function Image (V : Real) return String;
+   overriding function JSON_Image (V : Real) return String;
 
    overriding function To_Real (Img : String) return Real;
 
@@ -72,6 +76,7 @@ package Yeison_Classwide with Preelaborate is
      with String_Literal => To_Str;
 
    overriding function Image (V : Str) return String;
+   overriding function JSON_Image (V : Str) return String;
 
    overriding function To_Str (Img : Wide_Wide_String) return Str;
 
@@ -85,6 +90,7 @@ package Yeison_Classwide with Preelaborate is
    function Empty return Map;
 
    overriding function Image (V : Map) return String;
+   overriding function JSON_Image (V : Map) return String;
 
    procedure Insert (This  : in out Map;
                      Key   : String;
@@ -103,6 +109,7 @@ package Yeison_Classwide with Preelaborate is
    function Length (This : Vec) return Positive;
 
    overriding function Image (V : Vec) return String;
+   overriding function JSON_Image (V : Vec) return String;
 
    procedure Append (This : in out Vec; Value : Any'Class);
 
