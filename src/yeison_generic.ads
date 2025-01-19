@@ -1,12 +1,24 @@
-pragma Ada_2022;
+pragma Ada_2012;
 
 with Ada.Finalization;
 
-private with Ada.Numerics.Big_Numbers.Big_Integers;
-private with Ada.Numerics.Big_Numbers.Big_Reals;
+--  private with Ada.Numerics.Big_Numbers.Big_Integers;
+--  private with Ada.Numerics.Big_Numbers.Big_Reals;
 private with Ada.Strings.Wide_Wide_Unbounded;
 
-package Yeison with Preelaborate is
+generic
+   --  Because big numbers aren't available in Ada 2012, and no other
+   --  convenient implementation is available that I know, we just
+   --  delegate this impl to clients.
+   type Int_Type is private;
+   with function To_Integer (I : Int_Type) return Long_Long_Integer;
+   type Real_Type is private;
+   with function "<" (L, R : Int_Type) return Boolean is <>;
+   with function "<" (L, R : Real_Type) return Boolean is <>;
+package Yeison_Generic is
+
+   --  This should be Preelaborate but a suspicious errors in the body
+   --  precludes it for now. TODO: To be investigated.
 
    type Kinds is (Bool_Kind,
                   Int_Kind,
@@ -22,10 +34,10 @@ package Yeison with Preelaborate is
    subtype Text is Wide_Wide_String;
 
    type Any is new Ada.Finalization.Controlled with private with
-     Aggregate => (Empty     => Empty_Map,
-                   Add_Named => Initialize),
-     Integer_Literal   => To_Int,
-     String_Literal    => To_Str,
+     --  Aggregate => (Empty     => Empty_Map,
+     --                Add_Named => Initialize),
+     --  Integer_Literal   => To_Int,
+     --  String_Literal    => To_Str,
      Constant_Indexing => Const_Ref,
      Variable_Indexing => Reference;
 
@@ -77,17 +89,16 @@ package Yeison with Preelaborate is
 
    function False return Any;
 
-   function As_Bool return Boolean;
+   function As_Bool (This : Any) return Boolean;
 
-   function As_Int (This : Any) return Integer
-     with Pre => This.Kind = Int_Kind;
-
-   function To_Int (Img : String) return Any;
-
-   function To_Str (Img : Wide_Wide_String) return Any;
+   function As_Int (This : Any) return Long_Long_Integer;
 
    subtype Str is Any with
      Dynamic_Predicate => Str.Kind = Str_Kind;
+
+   function Make_Int (This : Int_Type) return Any;
+
+   function Make_Str (This : Text) return Any;
 
    ------------
    --  Maps  --
@@ -115,6 +126,14 @@ package Yeison with Preelaborate is
    function Map (This : Any) return Any is (This) with Inline;
    --  A pass-through to help with disambiguation and estetics
 
+   --  Old-style helpers
+
+   function Insert (This    : Any;
+                    Key     : Any;
+                    Value   : Any;
+                    Replace : Boolean := False)
+                    return Any;
+
    ---------------
    --  Vectors  --
    ---------------
@@ -124,9 +143,10 @@ package Yeison with Preelaborate is
 
    --  This type is a clutch until GNAT accepts both map/vector initializers
 
-   type Vec is private with
-     Aggregate => (Empty       => Empty_Any_Vec,
-                   Add_Unnamed => Initialize);
+   type Vec is private;
+     --  with
+     --  Aggregate => (Empty       => Empty_Any_Vec,
+     --                Add_Unnamed => Initialize);
 
    function Empty_Vec return Any;
 
@@ -135,7 +155,7 @@ package Yeison with Preelaborate is
       --  We use this package to avoid primitiveness as we cannot use 'class
       --  around here.
 
-      function Vec (This : Yeison.Vec) return Any;
+      function Vec (This : Yeison_Generic.Vec) return Any;
 
    end Make;
 
@@ -150,11 +170,11 @@ private
 
    Unimplemented : exception;
 
-   package Big_Ints renames Ada.Numerics.Big_Numbers.Big_Integers;
-   subtype Big_Int is Big_Ints.Big_Integer;
-
-   package Big_Reals renames Ada.Numerics.Big_Numbers.Big_Reals;
-   subtype Big_Real is Big_Reals.Big_Real;
+   --  package Big_Ints renames Ada.Numerics.Big_Numbers.Big_Integers;
+   --  subtype Big_Int is Big_Ints.Big_Integer;
+   --
+   --  package Big_Reals renames Ada.Numerics.Big_Numbers.Big_Reals;
+   --  subtype Big_Real is Big_Reals.Big_Real;
 
    package WWUStrings renames Ada.Strings.Wide_Wide_Unbounded;
    subtype WWUString is WWUStrings.Unbounded_Wide_Wide_String;
@@ -165,6 +185,9 @@ private
    type Any_Impl;
 
    type Any_Impl_Ptr is access Any_Impl;
+   --  Implementation is in body, so we can have a self-referential type but
+   --  also to control assignments via Controlled (when assigning through
+   --  indexing).
 
    type Any is new Ada.Finalization.Controlled with record
       Impl : Any_Impl_Ptr;
@@ -178,4 +201,4 @@ private
 
    type Vec is new Any with null record;
 
-end Yeison;
+end Yeison_Generic;
