@@ -1,3 +1,5 @@
+pragma Ada_2022;
+
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 use  Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
@@ -22,8 +24,6 @@ procedure Test is
       New_Line;
    end Report;
 
-   function Vec (This : Vec) return Any renames Yeison.Make.Vec;
-
 begin
    Report ("empty", Yeison.Invalid);
 
@@ -41,15 +41,14 @@ begin
 
    declare
       S : constant Any := "qwerS";
-      T : constant Str := "qwerT";
    begin
       Report ("var string", S);
-      Report ("var string", T);
    end;
 
    --  Maps
 
    Report ("empty map", []);
+   Report ("simple map", ["one" => 1]);
    Report ("literal map",
            ["one" => "one",
             "two" => 2,
@@ -73,6 +72,10 @@ begin
       V : Any;
    begin
       V (1) := "one";
+      Report ("initialized vec", V);
+      V (2) := "two";
+      V (1) := 1;
+      Report ("modified vec", V);
    end;
 
    --  References
@@ -80,15 +83,15 @@ begin
    declare
       X : Any;
    begin
-      X.Self := 1;
+      X.As_Ref := 1;
       Report ("X = 1", X);
-      X.Self := "one";
+      X.As_Ref := "one";
       Report ("X = ""one""", X);
-      X.Self := Any'([]);
+      X.As_Ref := Any'([]);
       Report ("X = {}", X);
-      X.Self := Map ([]);
+      X.As_Ref := Map ([]);
       Report ("X = {}", X);
-      X.Self := Vec ([]);
+      X.As_Ref := Vec ([]);
       Report ("X = []", X);
    end;
 

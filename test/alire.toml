@@ -15,7 +15,7 @@ executables = ["test"]
 "*" = "validation"
 
 [build-switches]
-"*".ada_version = "gnat_extensions"
+"*".ada_version = "Ada2022"
 
 [[depends-on]]
 yeison = "*"

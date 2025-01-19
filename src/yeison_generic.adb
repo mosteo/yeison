@@ -37,20 +37,6 @@ package body Yeison_Generic is
       end case;
    end record;
 
-   ----------
-   -- Make --
-   ----------
-
-   package body Make is
-
-      ---------
-      -- Vec --
-      ---------
-
-      function Vec (This : Yeison_Generic.Vec) return Any is (Any (This));
-
-   end Make;
-
    ---------
    -- "<" --
    ---------
@@ -89,12 +75,6 @@ package body Yeison_Generic is
 
    function As_Int (This : Any) return Long_Long_Integer
    is (To_Integer (This.Impl.Int));
-
-   -------------------
-   -- Empty_Any_Vec --
-   -------------------
-
-   function Empty_Any_Vec return Vec is (Any'(Empty_Vec) with null record);
 
    ---------------
    -- Empty_Map --
@@ -341,17 +321,6 @@ package body Yeison_Generic is
    procedure Append (This : in out Any; Elem : Any) is
    begin
       This.Impl.Vec.Append (Elem);
-   end Append;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append (This : in out Vec;
-                     Elem : Any'Class)
-   is
-   begin
-      Any (This).Append (Any (Elem));
    end Append;
 
    ---------------

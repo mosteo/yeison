@@ -26,8 +26,6 @@ procedure Test_12 is
       New_Line;
    end Report;
 
-   --  function Vec (This : Vec) return Any renames Yeison.Make.Vec;
-
 begin
    Report ("empty", Invalid);
 

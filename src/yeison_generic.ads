@@ -10,9 +10,9 @@ generic
    --  Because big numbers aren't available in Ada 2012, and no other
    --  convenient implementation is available that I know, we just
    --  delegate this impl to clients.
-   type Int_Type is private;
+   type Int_Type is private; -- not range <> to allow Big_Integer
    with function To_Integer (I : Int_Type) return Long_Long_Integer;
-   type Real_Type is private;
+   type Real_Type is private; -- same about digits <>
    with function "<" (L, R : Int_Type) return Boolean is <>;
    with function "<" (L, R : Real_Type) return Boolean is <>;
 package Yeison_Generic is
@@ -107,6 +107,7 @@ package Yeison_Generic is
    function Empty_Map return Any
      with Post => Empty_Map'Result.Kind = Map_Kind;
 
+   --  Not named Insert to avoid ambiguities with Add_Named aspect
    procedure Initialize (This  : in out Any;
                          Key   : Text;
                          Value : Any);
@@ -141,30 +142,13 @@ package Yeison_Generic is
    procedure Append (This : in out Any; Elem : Any) with
      Pre => This.Kind = Vec_Kind;
 
-   --  This type is a clutch until GNAT accepts both map/vector initializers
-
-   type Vec is private;
-     --  with
-     --  Aggregate => (Empty       => Empty_Any_Vec,
-     --                Add_Unnamed => Initialize);
-
    function Empty_Vec return Any;
 
-   package Make is
+   -------------------
+   --  Boilerplate  --
+   -------------------
 
-      --  We use this package to avoid primitiveness as we cannot use 'class
-      --  around here.
-
-      function Vec (This : Yeison_Generic.Vec) return Any;
-
-   end Make;
-
-   procedure Append (This : in out Vec;
-                     Elem : Any'Class);
-
-   function Empty_Any_Vec return Vec;
-
-   procedure Initialize (This : in out Vec; Elem : Any'Class) renames Append;
+   function To_Str (Img : Wide_Wide_String) return Any;
 
 private
 

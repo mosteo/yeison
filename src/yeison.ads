@@ -1,35 +1,92 @@
 pragma Ada_2022;
 
-with Ada.Finalization;
+with Ada.Numerics.Big_Numbers.Big_Integers;
+with Ada.Numerics.Big_Numbers.Big_Reals;
 
-private with Ada.Numerics.Big_Numbers.Big_Integers;
-private with Ada.Numerics.Big_Numbers.Big_Reals;
-private with Ada.Strings.Wide_Wide_Unbounded;
+with Yeison_Generic;
 
-package Yeison with Preelaborate is
+package Yeison is
 
-   type Kinds is (Bool_Kind,
-                  Int_Kind,
-                  Real_Kind,
-                  Str_Kind,
-                  Map_Kind,
-                  Vec_Kind);
+   ---------------------
+   --  Preliminaries  --
+   ---------------------
 
-   subtype Scalar_Kinds is Kinds range Kinds'First .. Kinds'Pred (Map_Kind);
+   --  These enable the instantiation below of Any; can be skipped. They
+   --  cannot be private as we want to visibly inherit lots of operations
+   --  from Yeison_Generic.
 
-   subtype Composite_Kinds is Kinds range Map_Kind .. Kinds'Last;
+   use Ada.Numerics.Big_Numbers;
 
-   subtype Text is Wide_Wide_String;
+   package Bigint_Conversions is
+     new Big_Integers.Signed_Conversions (Long_Long_Integer);
 
-   type Any is new Ada.Finalization.Controlled with private with
+   package Impl is
+     new Yeison_Generic (Big_Integers.Big_Integer,
+                         Bigint_Conversions.From_Big_Integer,
+                         Big_Reals.Big_Real,
+                         Big_Integers."<",
+                         Big_Reals."<");
+
+   use all type Impl.Kinds;
+
+   subtype Scalar_Kinds is Impl.Scalar_Kinds;
+
+   subtype Composite_Kinds is Impl.Composite_Kinds;
+
+   subtype Text is Impl.Text;
+
+   -----------
+   --  Any  --
+   -----------
+
+   type Any is new Impl.Any with private with
      Aggregate => (Empty     => Empty_Map,
-                   Add_Named => Initialize),
+                   Add_Named => Insert),
      Integer_Literal   => To_Int,
      String_Literal    => To_Str,
      Constant_Indexing => Const_Ref,
      Variable_Indexing => Reference;
+   --  We need a new derived type because user literal aspects cannot be
+   --  applied to subtypes (drats).
 
-   --  TODO: remove tagged once GNAT accepts dot notation for all private types
+   --  Check Yeison_Generic spec for the full features of the type that are
+   --  inherited here.
+
+   -----------
+   --  Map  --
+   -----------
+
+   --  Minimal facilities to enable aspects. Full operations in Yeison_Generic
+
+   procedure Insert (This  : in out Any;
+                     Key   : Text;
+                     Value : Any);
+
+   function To_Int (Img : String) return Any;
+   overriding function To_Str (Img : Text) return Any;
+
+   -----------
+   --  Vec  --
+   -----------
+
+   --  Auxiliary type needed until GNAT accepts both Add_Named and Add_Unnamed
+   --  aspects.
+
+   type Vec_Aux is private with
+     Aggregate => (Empty       => Empty_Vec_Aux,
+                   Add_Unnamed => Append);
+
+   function Empty_Vec_Aux return Vec_Aux;
+
+   procedure Append (This : in out Vec_Aux; Elem : Any'Class);
+
+   function Vec (This : Vec_Aux) return Any;
+
+   -------------------
+   --  Boilerplate  --
+   -------------------
+
+   --  References and the like for indexing. Not really directly interesting.
 
    type Ref (Element : not null access Any) is limited null record with
      Implicit_Dereference => Element;
@@ -37,19 +94,11 @@ package Yeison with Preelaborate is
    type Const (Element : not null access constant Any) is limited null record
      with Implicit_Dereference => Element;
 
-   --------------
-   --  Common  --
-   --------------
+   function As_Ref (This : aliased Any) return Ref;
+   --  Not really needed by clients; used in tests
 
-   function Image (This : Any; Compact : Boolean := False) return Text;
-
-   function Invalid return Any;
-   --  An uninitialized Any; using it as the RHS of assignments will fail
-
-   function Is_Valid (This : Any) return Boolean;
-
-   function Kind (This : Any) return Kinds with
-     Pre => This.Is_Valid;
+   --  We need to recreate references for the access discriminant to use the
+   --  proper type...
 
    function Const_Ref (This : aliased Any; Pos : Any) return Const with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
@@ -66,116 +115,24 @@ package Yeison with Preelaborate is
    --  map) depending on Any.Kind being Int or something else. If you want to
    --  force either one, assign first an empty value.
 
-   function Self (This : aliased Any) return Ref;
-   --  A reference without indexing, mainly useful for testing
-
-   ---------------
-   --  Scalars  --
-   ---------------
-
-   function True return Any;
-
-   function False return Any;
-
-   function As_Bool return Boolean;
-
-   function As_Int (This : Any) return Integer
-     with Pre => This.Kind = Int_Kind;
-
-   function To_Int (Img : String) return Any;
-
-   function To_Str (Img : Wide_Wide_String) return Any;
-
-   subtype Str is Any with
-     Dynamic_Predicate => Str.Kind = Str_Kind;
-
-   ------------
-   --  Maps  --
-   ------------
-
-   function Empty_Map return Any
-     with Post => Empty_Map'Result.Kind = Map_Kind;
-
-   procedure Initialize (This  : in out Any;
-                         Key   : Text;
-                         Value : Any);
-   --  Note that JSON/TOML only accept string keys, but YAML accepts
-   --  Any(thing). Meanwhile, Ada 2022 doesn't let you use a non-static value
-   --  for keys/indices, so any non-basic type won't do here. Not sure if that
-   --  is worth reporting, as this is the subject of active discussion that no
-   --  overlapping values should be able to be given, and relaxations on this
-   --  point are expressly frowned upon. In conclusion: to initialize with
-   --  heterogeneous types, you can't use initialization expressions.
-
-   procedure Insert (This    : in out Any;
-                     Key     : Any;
-                     Value   : Any;
-                     Replace : Boolean := False);
-
-   function Map (This : Any) return Any is (This) with Inline;
-   --  A pass-through to help with disambiguation and estetics
-
-   ---------------
-   --  Vectors  --
-   ---------------
-
-   procedure Append (This : in out Any; Elem : Any) with
-     Pre => This.Kind = Vec_Kind;
-
-   --  This type is a clutch until GNAT accepts both map/vector initializers
-
-   type Vec is private with
-     Aggregate => (Empty       => Empty_Any_Vec,
-                   Add_Unnamed => Initialize);
-
-   function Empty_Vec return Any;
-
-   package Make is
-
-      --  We use this package to avoid primitiveness as we cannot use 'class
-      --  around here.
-
-      function Vec (This : Yeison.Vec) return Any;
-
-   end Make;
-
-   procedure Append (This : in out Vec;
-                     Elem : Any'Class);
-
-   function Empty_Any_Vec return Vec;
-
-   procedure Initialize (This : in out Vec; Elem : Any'Class) renames Append;
-
 private
 
-   Unimplemented : exception;
+   type Any is new Impl.Any with null record;
 
-   package Big_Ints renames Ada.Numerics.Big_Numbers.Big_Integers;
-   subtype Big_Int is Big_Ints.Big_Integer;
-
-   package Big_Reals renames Ada.Numerics.Big_Numbers.Big_Reals;
-   subtype Big_Real is Big_Reals.Big_Real;
-
-   package WWUStrings renames Ada.Strings.Wide_Wide_Unbounded;
-   subtype WWUString is WWUStrings.Unbounded_Wide_Wide_String;
-
-   function "+" (S : Wide_Wide_String) return WWUString renames
-     Ada.Strings.Wide_Wide_Unbounded.To_Unbounded_Wide_Wide_String;
-
-   type Any_Impl;
-
-   type Any_Impl_Ptr is access Any_Impl;
-
-   type Any is new Ada.Finalization.Controlled with record
-      Impl : Any_Impl_Ptr;
+   type Vec_Aux is record
+      Vec : Any;
    end record;
 
-   function "<" (L, R : Any) return Boolean;
+   -------------------
+   -- Empty_Vec_Aux --
+   -------------------
 
-   overriding procedure Adjust (This : in out Any);
+   function Empty_Vec_Aux return Vec_Aux is (Vec => Empty_Vec);
 
-   overriding procedure Finalize (This : in out Any);
+   ---------
+   -- Vec --
+   ---------
 
-   type Vec is new Any with null record;
+   function Vec (This : Vec_Aux) return Any is (This.Vec);
 
 end Yeison;
