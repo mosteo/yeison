@@ -18,7 +18,7 @@ executables = ["test_12"]
 "*".ada_version = "Ada2022"
 
 [[depends-on]]
-yeison = "*"
+yeison_12 = "*"
 
 [[pins]]
-yeison = { path='..' }
+yeison_12 = { path='..' }

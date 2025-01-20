@@ -13,7 +13,7 @@ website = "https://github.com/mosteo/yeison"
 "*".ada_version = "Ada2022"
 
 [[depends-on]]
-compare_to_case = "*"
+yeison_12 = "*"
 
 [[pins]]
-compare_to_case = { path='../compare_to_case' }
+yeison_12 = { path='../yeison_12' }

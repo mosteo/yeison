@@ -1,5 +1,6 @@
 pragma Ada_2022;
 
+private with Ada.Characters.Conversions;
 with Ada.Numerics.Big_Numbers.Big_Integers;
 with Ada.Numerics.Big_Numbers.Big_Reals;
 
@@ -20,10 +21,17 @@ package Yeison is
    package Bigint_Conversions is
      new Big_Integers.Signed_Conversions (Long_Long_Integer);
 
+   function Image (I : Big_Integers.Big_Integer) return Wide_Wide_String;
+   function Image (R : Big_Reals.Big_Real) return Wide_Wide_String;
+
    package Impl is
      new Yeison_Generic (Big_Integers.Big_Integer,
                          Bigint_Conversions.From_Big_Integer,
+                         Image,
+
                          Big_Reals.Big_Real,
+                         Image,
+
                          Big_Integers."<",
                          Big_Reals."<");
 
@@ -122,6 +130,22 @@ private
    type Vec_Aux is record
       Vec : Any;
    end record;
+
+   package Charconv renames Ada.Characters.Conversions;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (I : Big_Integers.Big_Integer) return Wide_Wide_String
+   is (Charconv.To_Wide_Wide_String (Big_Integers.To_String (I)));
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (R : Big_Reals.Big_Real) return Wide_Wide_String
+   is (Charconv.To_Wide_Wide_String (Big_Reals.To_String (R)));
 
    -------------------
    -- Empty_Vec_Aux --

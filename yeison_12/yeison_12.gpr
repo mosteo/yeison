@@ -1,11 +1,12 @@
-with "config/yeison_config.gpr";
-project Yeison is
+with "config/yeison_12_config.gpr";
 
-   for Library_Name use "Yeison";
-   for Library_Version use Project'Library_Name & ".so." & Yeison_Config.Crate_Version;
+project Yeison_12 is
+
+   for Library_Name use "Yeison_12";
+   for Library_Version use Project'Library_Name & ".so." & Yeison_12_Config.Crate_Version;
 
    for Source_Dirs use ("src/", "config/");
-   for Object_Dir use "obj/" & Yeison_Config.Build_Profile;
+   for Object_Dir use "obj/" & Yeison_12_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Library_Dir use "lib";
 
@@ -15,7 +16,7 @@ project Yeison is
    for Library_Kind use Library_Type;
 
    package Compiler is
-      for Default_Switches ("Ada") use Yeison_Config.Ada_Compiler_Switches;
+      for Default_Switches ("Ada") use Yeison_12_Config.Ada_Compiler_Switches;
    end Compiler;
 
    package Binder is
@@ -26,4 +27,4 @@ project Yeison is
       for Artifacts (".") use ("share");
    end Install;
 
-end Yeison;
+end Yeison_12;
