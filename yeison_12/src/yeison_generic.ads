@@ -55,7 +55,12 @@ package Yeison_Generic is
    --  Common  --
    --------------
 
-   function Image (This : Any; Compact : Boolean := False) return Text;
+   type Image_Formats is (Ada_Like, JSON);
+
+   function Image (This    : Any;
+                   Format  : Image_Formats := Ada_Like;
+                   Compact : Boolean := False)
+                   return Text;
 
    function Invalid return Any;
    --  An uninitialized Any; using it as the RHS of assignments will fail

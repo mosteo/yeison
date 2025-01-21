@@ -102,7 +102,11 @@ package body Yeison_Generic is
    -- Image --
    -----------
 
-   function Image (This : Any; Compact : Boolean := False) return Text is
+   function Image (This    : Any;
+                   Format  : Image_Formats := Ada_Like;
+                   Compact : Boolean := False)
+                   return Text
+   is
       use Ada.Strings.Wide_Wide_Unbounded;
       function "+" (S : Wide_Wide_String) return WWUString
                     renames To_Unbounded_Wide_Wide_String;
@@ -163,12 +167,13 @@ package body Yeison_Generic is
                   while Has_Element (C) loop
                      Append (Result,
                              (if Abbr then " " else Prefix & Tab)
-                             & Key (C).Image (Compact) & " => ");
+                             & Key (C).Image (Format, Compact) & " => ");
                      --  TODO: the above key image should be prefixed in case
                      --  we are using an object for indexing.
 
                      Traverse (This.Impl.Map.Constant_Reference (C),
-                               WS (Prefix & Tab & Key (C).Image (Compact)
+                               WS (Prefix & Tab
+                                 & Key (C).Image (Format, Compact)
                                  & " => "),
                                Contd => True);
                      if not Abbr then
