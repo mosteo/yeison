@@ -4,7 +4,7 @@ with Ada.Containers.Vectors;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Unchecked_Deallocation;
 
---  with Compare_To_Case;
+with Yeison_Utils;
 
 package body Yeison_Generic is
 
@@ -98,6 +98,15 @@ package body Yeison_Generic is
 
    function False return Any is (raise Unimplemented);
 
+   ----------------
+   -- JSON_Quote --
+   ----------------
+
+   function JSON_Quote (Str : Text) return Text is
+   begin
+      return '"' & Yeison_Utils.JSON_Escape (Str) & '"';
+   end JSON_Quote;
+
    -----------
    -- Image --
    -----------
@@ -120,12 +129,78 @@ package body Yeison_Generic is
              when Bool_Kind       => This.Impl.Bool'Wide_Wide_Image,
              when Int_Kind        => Image (This.Impl.Int),
              when Real_Kind       => Image (This.Impl.Real),
-             when Str_Kind        => To_Wide_Wide_String (This.Impl.Str),
+             when Str_Kind        =>
+            (case Format is
+                when Ada_Like => To_Wide_Wide_String (This.Impl.Str),
+                when JSON => JSON_Quote (To_Wide_Wide_String (This.Impl.Str))),
              when Composite_Kinds =>
                 raise Program_Error with "not a scalar: " & This.Kind'Image
          );
 
       Result : WWUString;
+
+      ---------------------
+      -- Empty_Map_Image --
+      ---------------------
+
+      function Empty_Map_Image return Text
+      is (case Format is
+             when Ada_Like => "[=>]",
+             when JSON     => "{}");
+
+      --------------
+      -- Map_Open --
+      --------------
+
+      function Map_Open return Text
+      is (case Format is
+             when Ada_Like => "[",
+             when JSON     => "{");
+
+      ---------------
+      -- Map_Close --
+      ---------------
+
+      function Map_Close return Text
+      is (case Format is
+             when Ada_Like => "]",
+             when JSON     => "}");
+
+      ---------------
+      -- Map_Arrow --
+      ---------------
+
+      function Map_Arrow return Text
+      is (case Format is
+             when Ada_Like => " => ",
+             when JSON     => ": ");
+
+      ---------------------
+      -- Empty_Vec_Image --
+      ---------------------
+
+      function Empty_Vec_Image return Text
+      is (case Format is
+             when Ada_Like => "[,]",
+             when JSON     => "[]");
+
+      --------------
+      -- Vec_Open --
+      --------------
+
+      function Vec_Open return Text
+      is (case Format is
+             when Ada_Like => "[",
+             when JSON     => "[");
+
+      ---------------
+      -- Vec_Close --
+      ---------------
+
+      function Vec_Close return Text
+      is (case Format is
+             when Ada_Like => "]",
+             when JSON     => "]");
 
       --------------
       -- Traverse --
@@ -136,7 +211,10 @@ package body Yeison_Generic is
                           Contd  : Boolean := False)
       is
          NL  : constant Text := "" & Ada.Characters.Wide_Wide_Latin_1.LF;
-         Tab : constant Text := "   ";
+         Tab : constant Text :=
+                 (case Format is
+                     when Ada_Like => "   ",
+                     when JSON     => "  ");
          function WS (Str : Text) return Text
          is (1 .. Str'Length => ' ');
       begin
@@ -155,26 +233,27 @@ package body Yeison_Generic is
                begin
                   if This.Impl.Map.Is_Empty then
                      Append (Result,
-                             (if Contd then "" else Prefix) & "[=>]");
+                             (if Contd then "" else Prefix) & Empty_Map_Image);
                      return;
                   end if;
 
                   Append (Result,
                           (if Contd then "" else Prefix)
-                          & "["
+                          & Map_Open
                           & (if Abbr then " " else NL));
 
                   while Has_Element (C) loop
                      Append (Result,
                              (if Abbr then " " else Prefix & Tab)
-                             & Key (C).Image (Format, Compact) & " => ");
+                             & Key (C).Image (Format, Compact)
+                             & Map_Arrow);
                      --  TODO: the above key image should be prefixed in case
                      --  we are using an object for indexing.
 
                      Traverse (This.Impl.Map.Constant_Reference (C),
                                WS (Prefix & Tab
                                  & Key (C).Image (Format, Compact)
-                                 & " => "),
+                                 & Map_Arrow),
                                Contd => True);
                      if not Abbr then
                         Append (Result, NL);
@@ -183,7 +262,7 @@ package body Yeison_Generic is
                   end loop;
 
                   Append (Result,
-                          (if Abbr then " " else Prefix) & "]");
+                          (if Abbr then " " else Prefix) & Map_Close);
                end;
 
             when Vec_Kind =>
@@ -194,13 +273,14 @@ package body Yeison_Generic is
                begin
                   if This.Impl.Vec.Is_Empty then
                      Append (Result,
-                             (if Contd then "" else Prefix) & "[,]");
+                             (if Contd then "" else Prefix)
+                              & Empty_Vec_Image);
                      return;
                   end if;
 
                   Append (Result,
                           (if Contd then "" else Prefix)
-                          & "["
+                          & Vec_Open
                           & (if Abbr then " " else NL));
 
                   for E of This.Impl.Vec loop
@@ -216,7 +296,7 @@ package body Yeison_Generic is
                   end loop;
                   Append (Result,
                           (if Abbr then " " else Prefix)
-                          & "]");
+                          & Vec_Close);
                end;
          end case;
       end Traverse;
