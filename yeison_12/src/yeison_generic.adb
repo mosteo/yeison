@@ -1,12 +1,17 @@
 with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
+with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Unchecked_Deallocation;
 
 with Yeison_Utils;
 
 package body Yeison_Generic is
+
+   package Fixed renames Ada.Strings.Wide_Wide_Fixed;
+
+   use all type Ada.Strings.Trim_End;
 
    subtype Any_Parent is Ada.Finalization.Controlled;
 
@@ -111,7 +116,7 @@ package body Yeison_Generic is
    -- Image --
    -----------
 
-   function Image (This    : Any;
+   function Image (This    : Any'Class;
                    Format  : Image_Formats := Ada_Like;
                    Compact : Boolean := False)
                    return Text
@@ -126,11 +131,14 @@ package body Yeison_Generic is
 
       function Scalar_Image (This : Any) return Text
       is (case This.Kind is
-             when Bool_Kind       => This.Impl.Bool'Wide_Wide_Image,
-             when Int_Kind        => Image (This.Impl.Int),
-             when Real_Kind       => Image (This.Impl.Real),
+             when Bool_Kind       =>
+                (if This.Impl.Bool then "true" else "false"),
+             when Int_Kind        =>
+                Fixed.Trim (Image (This.Impl.Int), Side => Both),
+             when Real_Kind       =>
+                Fixed.Trim (Image (This.Impl.Real), Side => Both),
              when Str_Kind        =>
-            (case Format is
+               (case Format is
                 when Ada_Like => To_Wide_Wide_String (This.Impl.Str),
                 when JSON => JSON_Quote (To_Wide_Wide_String (This.Impl.Str))),
              when Composite_Kinds =>

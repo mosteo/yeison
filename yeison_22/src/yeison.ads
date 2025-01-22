@@ -51,6 +51,7 @@ package Yeison is
      Aggregate => (Empty     => Empty_Map,
                    Add_Named => Insert),
      Integer_Literal   => To_Int,
+     Real_Literal      => To_Real,
      String_Literal    => To_Str,
      Constant_Indexing => Const_Ref,
      Variable_Indexing => Reference;
@@ -59,6 +60,21 @@ package Yeison is
 
    --  Check Yeison_Generic spec for the full features of the type that are
    --  inherited here.
+
+   subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
+   subtype Int is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
+   subtype Map is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
+   subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
+   subtype Str is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
+   subtype Vec is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
+
+   ---------------
+   --  Scalars  --
+   ---------------
+
+   function To_Int (Img : String) return Any;
+   function To_Real (Img : String) return Any;
+   overriding function To_Str (Img : Text) return Any;
 
    -----------
    --  Map  --
@@ -69,9 +85,6 @@ package Yeison is
    procedure Insert (This  : in out Any;
                      Key   : Text;
                      Value : Any);
-
-   function To_Int (Img : String) return Any;
-   overriding function To_Str (Img : Text) return Any;
 
    -----------
    --  Vec  --
@@ -86,9 +99,23 @@ package Yeison is
 
    function Empty_Vec_Aux return Vec_Aux;
 
-   procedure Append (This : in out Vec_Aux; Elem : Any'Class);
+   procedure Append (This : in out Vec_Aux; Elem : Any);
 
-   function Vec (This : Vec_Aux) return Any;
+   function To_Vec (This : Vec_Aux) return Any;
+   function V (This : Vec_Aux) return Any renames To_Vec;
+
+   ---------------
+   -- Operators --
+   ---------------
+
+   package Operators is
+
+      function "+" (This : Vec_Aux) return Any renames To_Vec;
+
+      function "/" (L, R : Any) return Any with
+        Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
+        Post => "/"'Result.Kind in Vec_Kind;
+   end Operators;
 
    -------------------
    --  Boilerplate  --
@@ -157,6 +184,6 @@ private
    -- Vec --
    ---------
 
-   function Vec (This : Vec_Aux) return Any is (This.Vec);
+   function To_Vec (This : Vec_Aux) return Any is (This.Vec);
 
 end Yeison;

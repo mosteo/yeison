@@ -35,21 +35,34 @@ package Yeison_Generic is
 
    subtype Text is Wide_Wide_String;
 
-   type Any is new Ada.Finalization.Controlled with private with
-     --  Aggregate => (Empty     => Empty_Map,
-     --                Add_Named => Initialize),
-     --  Integer_Literal   => To_Int,
-     --  String_Literal    => To_Str,
-     Constant_Indexing => Const_Ref,
-     Variable_Indexing => Reference;
+   type Any is new Ada.Finalization.Controlled with private;
+   --  No aspects here. This forces us to expose them in Yeison_12 and
+   --  Yesion_22, which involves some duplication, but otherwise there are
+   --  some ambiguities that rain on our parade...
+
+   --  Explicit types
+
+   subtype Any_Bool is Any with Dynamic_Predicate => Any_Bool.Kind = Bool_Kind;
+
+   subtype Any_Str is Any with Dynamic_Predicate => Any_Str.Kind = Str_Kind;
+
+   subtype Any_Scalar is Any with
+     Dynamic_Predicate => Any_Scalar.Kind in Scalar_Kinds;
+
+   subtype Any_Composite is Any with
+     Dynamic_Predicate => Any_Composite.Kind in Composite_Kinds;
+
+   subtype Any_Map is Any with Dynamic_Predicate => Any_Map.Kind = Map_Kind;
+
+   subtype Any_Vec is Any with Dynamic_Predicate => Any_Vec.Kind = Vec_Kind;
 
    --  TODO: remove tagged once GNAT accepts dot notation for all private types
 
-   type Ref (Element : not null access Any) is limited null record with
-     Implicit_Dereference => Element;
-
-   type Const (Element : not null access constant Any) is limited null record
-     with Implicit_Dereference => Element;
+   --  type Ref (Element : not null access Any) is limited null record with
+   --    Implicit_Dereference => Element;
+   --
+--  type Const (Element : not null access constant Any) is limited null record
+   --    with Implicit_Dereference => Element;
 
    --------------
    --  Common  --
@@ -57,7 +70,7 @@ package Yeison_Generic is
 
    type Image_Formats is (Ada_Like, JSON);
 
-   function Image (This    : Any;
+   function Image (This    : Any'Class;
                    Format  : Image_Formats := Ada_Like;
                    Compact : Boolean := False)
                    return Text;
@@ -70,13 +83,13 @@ package Yeison_Generic is
    function Kind (This : Any) return Kinds with
      Pre => This.Is_Valid;
 
-   function Const_Ref (This : aliased Any; Pos : Any) return Const with
-     Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
-   --  See notes on Reference below. Same applies, except for the
-   --  initialization of empty maps/vectors.
-
-   function Reference (This : aliased Any; Pos : Any) return Ref with
-     Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
+   --  function Const_Ref (This : aliased Any; Pos : Any) return Const with
+   --    Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
+   --  --  See notes on Reference below. Same applies, except for the
+   --  --  initialization of empty maps/vectors.
+   --
+   --  function Reference (This : aliased Any; Pos : Any) return Ref with
+   --    Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  Any may be a scalar, which will be used as key/index, or a vector that
    --  will be consumed one element at a time. In YAML, keys can be complex
    --  types, which is discouraged, and this is explicitly not supported.
@@ -85,7 +98,7 @@ package Yeison_Generic is
    --  map) depending on Any.Kind being Int or something else. If you want to
    --  force either one, assign first an empty value.
 
-   function Self (This : aliased Any) return Ref;
+--   function Self (This : aliased Any) return Ref;
    --  A reference without indexing, mainly useful for testing
 
    ---------------
@@ -100,9 +113,6 @@ package Yeison_Generic is
 
    function As_Int (This : Any) return Long_Long_Integer;
 
-   subtype Str is Any with
-     Dynamic_Predicate => Str.Kind = Str_Kind;
-
    function Make_Int (This : Int_Type) return Any;
 
    function Make_Str (This : Text) return Any;
@@ -112,7 +122,7 @@ package Yeison_Generic is
    ------------
 
    function Empty_Map return Any
-     with Post => Empty_Map'Result.Kind = Map_Kind;
+     with Post => Empty_Map'Result in Any_Map;
 
    --  Not named Insert to avoid ambiguities with Add_Named aspect
    procedure Initialize (This  : in out Any;
@@ -147,9 +157,24 @@ package Yeison_Generic is
    ---------------
 
    procedure Append (This : in out Any; Elem : Any) with
-     Pre => This.Kind = Vec_Kind;
+     Pre => This in Any_Vec;
 
    function Empty_Vec return Any;
+
+   ----------------
+   --  Indexing  --
+   ----------------
+
+   function Get (This : Any; Pos : Any) return Any with
+     Pre => This in Any_Composite and then Pos in Any_Scalar;
+
+   package Operators is
+
+      function "/" (L, R : Any) return Any with
+        Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
+        Post => "/"'Result in Any_Vec;
+
+   end Operators;
 
    -------------------
    --  Boilerplate  --

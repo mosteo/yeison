@@ -42,6 +42,8 @@ package Yeison_12 is
    function Empty_Map return Any renames Impl.Empty_Map;
    function Empty_Vec return Any renames Impl.Empty_Vec;
 
+   package Operators renames Impl.Operators;
+
    --  Ada 2012-specific helpers
 
    type Any_Array is array (Positive range <>) of Any;
