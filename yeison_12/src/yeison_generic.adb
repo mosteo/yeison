@@ -50,31 +50,23 @@ package body Yeison_Generic is
    -- Operators --
    ---------------
 
-   package body Operators is
-
-      ---------
-      -- "/" --
-      ---------
-
-      function "/" (L, R : Any) return Any is
-      begin
-         if L in Any_Scalar then
-            return Result : Any := Empty_Vec do
-               Result.Append (L);
-               Result.Append (R);
-            end return;
-         elsif L in Any_Vec then
-            return Result : Any := L do
-               Result.Append (R);
-            end return;
-         else
-            raise Constraint_Error with
-              "Cannot append using ""/"" when left operator is: "
-              & L.Kind'Image;
-         end if;
-      end "/";
-
-   end Operators;
+   function "/" (L, R : Any) return Any is
+   begin
+      if L in Any_Scalar then
+         return Result : Any := Empty_Vec do
+            Result.Append (L);
+            Result.Append (R);
+         end return;
+      elsif L in Any_Vec then
+         return Result : Any := L do
+            Result.Append (R);
+         end return;
+      else
+         raise Constraint_Error with
+           "Cannot append using ""/"" when left operator is: "
+           & L.Kind'Image;
+      end if;
+   end "/";
 
    ---------
    -- "<" --

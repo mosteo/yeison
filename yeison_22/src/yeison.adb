@@ -1,8 +1,26 @@
-with Ada.Unchecked_Conversion;
-
 package body Yeison is
 
    Unimplemented : exception;
+
+   ------------
+   -- To_Any --
+   ------------
+
+   function To_Any (This : Impl.Any) return Any
+   is (This with null record);
+
+   package References is new Impl.References (Any, To_Any) with Unreferenced;
+
+   ---------------
+   -- Operators --
+   ---------------
+
+   package body Operators is
+
+      function "/" (L, R : Any) return Any
+      is (Impl."/" (Impl.Any (L), Impl.Any (R)) with null record);
+
+   end Operators;
 
    ------------
    -- As_Ref --
@@ -30,6 +48,13 @@ package body Yeison is
    function To_Int (Img : String) return Any
    is (Make_Int (Big_Integers.From_String (Img)));
 
+   -------------
+   -- To_Real --
+   -------------
+
+   function To_Real (Img : String) return Any
+   is (raise Unimplemented);
+
    ------------
    -- To_Str --
    ------------
@@ -50,32 +75,15 @@ package body Yeison is
    ---------------
 
    function Reference (This : aliased Any; Pos : Any) return Ref
-   is
-      T : Impl.Any renames Impl.Any (This);
-      P : Impl.Any renames Impl.Any (Pos);
-
-      type Any_Ptr is access all Any;
-      type Impl_Ptr is access all Impl.Any;
-
-      function Cast is
-        new Ada.Unchecked_Conversion (Impl_Ptr, Any_Ptr);
-   begin
-      return Ref'(Element =>
-                    Cast (T.Reference (P).Element).all'Unchecked_Access);
-      --  This is safe to do because Any and Impl.Any are essentially the
-      --  same type; we use a downgraded view of Any for referencing using the
-      --  base type. Since the result cannot be downcasted (forbidden by Ada)
-      --  despite us knowing it is right, we force-cast the pointers which has
-      --  the same effect. Fingers crossed.
-   end Reference;
+   is (raise Unimplemented);
 
    ------------
    -- Append --
    ------------
 
-   procedure Append (This : in out Vec_Aux; Elem : Any'Class) is
+   procedure Append (This : in out Vec_Aux; Elem : Any) is
    begin
-      This.Vec.Append (Any (Elem));
+      This.Vec.Append (Elem);
    end Append;
 
 end Yeison;

@@ -150,11 +150,13 @@ package Yeison_Generic is
    -- Operators --
    ---------------
 
+   function "/" (L, R : Any) return Any with
+     Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
+     Post => "/"'Result.Kind = Vec_Kind;
+
    package Operators is
 
-      function "/" (L, R : Any) return Any with
-        Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
-        Post => "/"'Result.Kind = Vec_Kind;
+      function "/" (L, R : Any) return Any renames Yeison_Generic."/";
 
    end Operators;
 

@@ -115,6 +115,7 @@ package Yeison is
       function "/" (L, R : Any) return Any with
         Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
         Post => "/"'Result.Kind in Vec_Kind;
+
    end Operators;
 
    -------------------

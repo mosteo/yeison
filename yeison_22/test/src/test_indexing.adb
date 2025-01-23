@@ -27,7 +27,7 @@ package body Test_Indexing is
    M3 : constant Yeison.Map := ["one" => A1, "two" => "two", "three" => M2];
    --  A map containing other maps
 
-   V1 : constant Yeison.Vec := +[A1, A2] with Unreferenced;
+   V1 : constant Yeison.Vec := +[A1, A2, A3] with Unreferenced;
    --  A vector initialized with atoms
 
    V2 : constant Yeison.Vec := +[1, 2, 3] with Unreferenced;
