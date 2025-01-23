@@ -3,11 +3,13 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
---  with Ada.Tags; use Ada.Tags;
+with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
---  with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
---  with GNAT.IO; use GNAT.IO;
+pragma Warnings (Off);
+with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
+with GNAT.IO; use GNAT.IO;
+pragma Warnings (On);
 
 with Yeison_Utils;
 
@@ -44,29 +46,70 @@ package body Yeison_Generic is
          when Vec_Kind =>
             Vec  : Any_Vectors.Vector;
       end case;
-   end record;
+   end record
+     --  with Dynamic_Predicate =>
+     --    (if Any_Impl.Kind = Map_Kind then
+     --       (for all E of Any_Impl.Map =>
+     --              External_Tag (E'Tag) /= "YEISON_12.IMPL.ANY"));
+     ;
 
    ---------------
    -- Operators --
    ---------------
 
-   function "/" (L, R : Any) return Any is
-   begin
-      if L in Any_Scalar then
-         return Result : Any := Empty_Vec do
-            Result.Append (L);
-            Result.Append (R);
-         end return;
-      elsif L in Any_Vec then
-         return Result : Any := L do
-            Result.Append (R);
-         end return;
-      else
-         raise Constraint_Error with
-           "Cannot append using ""/"" when left operator is: "
-           & L.Kind'Image;
-      end if;
-   end "/";
+   package body Operators is
+
+      ---------
+      -- "/" --
+      ---------
+
+      function "/" (L, R : Any) return Any is
+      begin
+         if L.Kind in Scalar_Kinds then
+            return Result : Any := Empty_Vec do
+               Result.Append (L);
+               Result.Append (R);
+            end return;
+         elsif L.Kind in Vec_Kind then
+            return Result : Any := L do
+               Result.Append (R);
+            end return;
+         else
+            raise Constraint_Error with
+              "Cannot append using ""/"" when left operator is: "
+              & L.Kind'Image;
+         end if;
+      end "/";
+
+      ----------
+      -- Make --
+      ----------
+
+      package body Make is
+
+         ---------
+         -- Int --
+         ---------
+
+         function Int (This : Int_Type) return Any
+         is (To_Any
+             ((Any_Parent with Impl => new Any_Impl'
+                 (Kind => Int_Kind,
+                  Int  => This))));
+
+         ---------
+         -- Str --
+         ---------
+
+         function Str (This : Wide_Wide_String) return Any
+         is (To_Any
+             ((Any_Parent with Impl => new Any_Impl'
+                 (Kind => Str_Kind,
+                  Str  => +This))));
+
+      end Make;
+
+   end Operators;
 
    ---------
    -- "<" --
@@ -356,7 +399,10 @@ package body Yeison_Generic is
          Traverse (This, "");
       end if;
 
-      return To_Wide_Wide_String (Result);
+      return To_Wide_Wide_String
+        (
+         --  Wide_Wide_Expanded_Name (This'Tag) & ": " &
+         Result);
    end Image;
 
    -------------
@@ -379,30 +425,6 @@ package body Yeison_Generic is
 
    function Kind (This : Any) return Kinds
    is (This.Impl.Kind);
-
-   ------------
-   -- To_Str --
-   ------------
-
-   function To_Str (Img : Wide_Wide_String) return Any
-   is (Any_Parent with Impl => new Any_Impl'
-         (Kind => Str_Kind,
-          Str  => +Img));
-
-   --------------
-   -- Make_Int --
-   --------------
-
-   function Make_Int (This : Int_Type) return Any
-   is (Any_Parent with Impl => new Any_Impl'
-         (Kind => Int_Kind,
-          Int  => This));
-
-   --------------
-   -- Make_Str --
-   --------------
-
-   function Make_Str (This : Text) return Any renames To_Str;
 
    ---------
    -- "<" --
@@ -449,18 +471,6 @@ package body Yeison_Generic is
       This.Impl.Vec.Append (Elem);
    end Append;
 
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize (This  : in out Any;
-                         Key   : Text;
-                         Value : Any)
-   is
-   begin
-      This.Impl.Map.Insert (To_Str (Key), Value);
-   end Initialize;
-
    ------------
    -- Insert --
    ------------
@@ -506,6 +516,25 @@ package body Yeison_Generic is
    ----------------
 
    package body References is
+
+      ----------
+      -- Self --
+      ----------
+
+      function Self (This : Yeison_Generic.Any'Class) return Ref
+      is (if This in Any
+          then Any (This)'Unrestricted_Access
+          else raise Program_Error with External_Tag (This'Tag));
+
+      ----------
+      -- Wrap --
+      ----------
+
+      function Wrap (This : Yeison_Generic.Any'Class) return Any
+      is (if This in Any
+          then Any (This)
+          else To_Any (Yeison_Generic.Any (This)));
+      pragma Unreferenced (Wrap);
 
       ---------------
       -- Reference --
@@ -561,6 +590,12 @@ package body Yeison_Generic is
             when Map_Kind =>
                --  TODO: use cursors to avoid double lookup
 
+               --  Put_Line ("pos: " & Pos.Image);
+               --  Put_Line (This.Impl.Map.Contains (Pos)'Wide_Wide_Image);
+               --  if This.Impl.Map.Contains (Pos) then
+               --     Put_Line (This.Impl.Map (Pos).Image);
+               --  end if;
+
                if not This.Impl.Map.Contains (Pos) then
                   This.Impl.Map.Insert (Pos, To_Any (Invalid));
                end if;
@@ -598,15 +633,6 @@ package body Yeison_Generic is
                return Ref_By_Scalar (This, Pos);
          end case;
       end Reference;
-
-      ----------
-      -- Self --
-      ----------
-
-      function Self (This : Yeison_Generic.Any'Class) return Ref
-      is (if This in Any
-          then Any (This)'Unrestricted_Access
-          else Self (To_Any (Yeison_Generic.Any (This))));
 
    end References;
 

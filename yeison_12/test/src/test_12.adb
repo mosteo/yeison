@@ -5,7 +5,7 @@ use  Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNAT.IO; use GNAT.IO;
 
-with Yeison_12; use Yeison_12;
+with Yeison_12; use Yeison_12; use Yeison_12.Operators;
 
 procedure Test_12 is
 

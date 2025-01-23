@@ -27,6 +27,8 @@ package Yeison_12 is
    subtype Str  is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
    subtype Vec  is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
 
+   function To_Any (This : Impl.Any) return Any;
+
    --  Resurface non-inherited things
 
    subtype Kinds is Impl.Kinds;
@@ -37,17 +39,12 @@ package Yeison_12 is
 
    subtype Text is Impl.Text;
 
-   package Operators renames Impl.Operators;
-
    --  Ada 2012-specific helpers
 
    type Any_Array is array (Positive range <>) of Any;
 
    function To_Vec (A : Any_Array) return Any
      with Post => To_Vec'Result.Kind = Vec_Kind;
-
-   function "+" (I : Big_Int) return Any renames Make_Int;
-   function "+" (S : Text) return Any renames Make_Str;
 
    ----------------
    --  Indexing  --
@@ -78,6 +75,18 @@ package Yeison_12 is
    --  force either one, assign first an empty value.
 
    function Self (This : aliased Any) return Ref;
+
+   ---------------
+   -- Operators --
+   ---------------
+
+   package Operators is new Impl.Operators (Any);
+
+   ----------
+   -- Make --
+   ----------
+
+   package Make renames Operators.Make;
 
 private
 

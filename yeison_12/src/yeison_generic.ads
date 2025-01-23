@@ -40,22 +40,6 @@ package Yeison_Generic is
    --  Yesion_22, which involves some duplication, but otherwise there are
    --  some ambiguities that rain on our parade...
 
-   --  Explicit types
-
-   subtype Any_Bool is Any with Dynamic_Predicate => Any_Bool.Kind = Bool_Kind;
-
-   subtype Any_Str is Any with Dynamic_Predicate => Any_Str.Kind = Str_Kind;
-
-   subtype Any_Scalar is Any with
-     Dynamic_Predicate => Any_Scalar.Kind in Scalar_Kinds;
-
-   subtype Any_Composite is Any with
-     Dynamic_Predicate => Any_Composite.Kind in Composite_Kinds;
-
-   subtype Any_Map is Any with Dynamic_Predicate => Any_Map.Kind = Map_Kind;
-
-   subtype Any_Vec is Any with Dynamic_Predicate => Any_Vec.Kind = Vec_Kind;
-
    --  TODO: remove tagged once GNAT accepts dot notation for all private types
 
    --------------
@@ -91,10 +75,6 @@ package Yeison_Generic is
 
    function As_Text (This : Any) return Text;
 
-   function Make_Int (This : Int_Type) return Any;
-
-   function Make_Str (This : Text) return Any;
-
    ------------
    --  Maps  --
    ------------
@@ -102,10 +82,6 @@ package Yeison_Generic is
    function Empty_Map return Any
      with Post => Empty_Map'Result.Kind = Map_Kind;
 
-   --  Not named Insert to avoid ambiguities with Add_Named aspect
-   procedure Initialize (This  : in out Any;
-                         Key   : Text;
-                         Value : Any);
    --  Note that JSON/TOML only accept string keys, but YAML accepts
    --  Any(thing). Meanwhile, Ada 2022 doesn't let you use a non-static value
    --  for keys/indices, so any non-basic type won't do here. Not sure if that
@@ -150,21 +126,24 @@ package Yeison_Generic is
    -- Operators --
    ---------------
 
-   function "/" (L, R : Any) return Any with
-     Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
-     Post => "/"'Result.Kind = Vec_Kind;
-
+   generic
+      type Any is new Yeison_Generic.Any with private;
+      with function To_Any (This : Yeison_Generic.Any) return Any is <>;
    package Operators is
 
-      function "/" (L, R : Any) return Any renames Yeison_Generic."/";
+      function "/" (L, R : Any) return Any with
+        Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
+        Post => "/"'Result.Kind = Vec_Kind;
+
+      package Make is
+         function Int (This : Int_Type) return Any;
+         function Str (This : Text) return Any;
+      end Make;
+
+      function "+" (This : Int_Type) return Any renames Make.Int;
+      function "+" (This : Text) return Any renames Make.Str;
 
    end Operators;
-
-   -------------------
-   --  Boilerplate  --
-   -------------------
-
-   function To_Str (Img : Wide_Wide_String) return Any;
 
    ----------------
    -- References --
@@ -191,13 +170,6 @@ package Yeison_Generic is
       --  If This is invalid, the appropriate holder value will be created (vec
       --  or map) depending on Any.Kind being Int or something else. If you
       --  want to force either one, assign first an empty value.
-
-   private
-
-      function Self (This : Yeison_Generic.Any'Class) return Ref;
-      --  A reference without indexing, used internally. It also ensures the
-      --  proper derived type is returned even when a value was created with
-      --  a lesser type.
 
    end References;
 
@@ -237,7 +209,7 @@ private
    overriding procedure Finalize (This : in out Any);
 
    type Vec is record
-      Vec : Any_Vec;
+      Vec : Any;
    end record;
 
 end Yeison_Generic;
