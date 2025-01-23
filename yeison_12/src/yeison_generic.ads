@@ -89,6 +89,8 @@ package Yeison_Generic is
 
    function As_Int (This : Any) return Long_Long_Integer;
 
+   function As_Text (This : Any) return Text;
+
    function Make_Int (This : Int_Type) return Any;
 
    function Make_Str (This : Text) return Any;
@@ -168,6 +170,8 @@ package Yeison_Generic is
 
    generic
       type Any is new Yeison_Generic.Any with private;
+      with function To_Any (This : Yeison_Generic.Any) return Any;
+      --  To avoid mistypes
    package References is
 
       --  We don't want these to be primitive as that causes ambiguities in
@@ -175,7 +179,7 @@ package Yeison_Generic is
 
       type Ref is access Any;
 
-      function Reference (This : aliased Any; Pos : Any) return Ref with
+      function Reference (This : Any; Pos : Any) return Ref with
         Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
       --  Any may be a scalar, which will be used as key/index, or a vector
       --  that will be consumed one element at a time. In YAML, keys can be
@@ -186,8 +190,12 @@ package Yeison_Generic is
       --  or map) depending on Any.Kind being Int or something else. If you
       --  want to force either one, assign first an empty value.
 
-      function Self (This : aliased Any) return Ref;
-      --  A reference without indexing, mainly useful for testing
+   private
+
+      function Self (This : Yeison_Generic.Any'Class) return Ref;
+      --  A reference without indexing, used internally. It also ensures the
+      --  proper derived type is returned even when a value was created with
+      --  a lesser type.
 
    end References;
 

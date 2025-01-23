@@ -26,6 +26,15 @@ procedure Test_12 is
       New_Line;
    end Report;
 
+   ---------------
+   -- Report_RW --
+   ---------------
+
+   procedure Report_RW (Label : String; Value : in out Yeison.Any) is
+   begin
+      Report (Label, Value);
+   end Report_RW;
+
 begin
    Report ("empty", Invalid);
 
@@ -94,5 +103,22 @@ begin
       X.Self := Empty_Vec;
       Report ("X = []", X);
    end;
+
+   Report ("constant indexing",
+           Empty_Map.Insert (+"key", +"val")
+           (+"key"));
+   Report_RW ("variable indexing",
+              Empty_Map.Insert (+"key", +"val") (+"key"));
+
+   declare
+      M : constant Any := Empty_Map.Insert (+"key", +"val");
+   begin
+      Report ("map on the fly", M);
+      Report ("map indexing", M (+"key"));
+      pragma Assert (M (+"key").As_Text = "val");
+   end;
+
+   pragma Assert
+     (Empty_Map.Insert (+"key", +"val") (+"key").As_Text = "val");
 
 end Test_12;

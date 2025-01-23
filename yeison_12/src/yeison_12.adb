@@ -1,8 +1,13 @@
 package body Yeison_12 is
 
-   Unimplemented : exception;
+   ------------
+   -- To_Any --
+   ------------
 
-   package References is new Impl.References (Any);
+   function To_Any (This : Impl.Any) return Any
+   is (This with null record);
+
+   package References is new Impl.References (Any, To_Any);
 
    ------------
    -- To_Vec --
@@ -21,14 +26,14 @@ package body Yeison_12 is
    -- Const_Ref --
    ---------------
 
-   function Const_Ref (This : aliased Any; Pos : Any) return Const
-   is (raise Unimplemented);
+   function Const_Ref (This : Any; Pos : Any) return Const
+   is (Element => References.Reference (This, Pos));
 
    ---------------
    -- Reference --
    ---------------
 
-   function Reference (This : aliased Any; Pos : Any) return Ref
+   function Reference (This : Any; Pos : Any) return Ref
    is (Element => References.Reference (This, Pos));
 
    ----------

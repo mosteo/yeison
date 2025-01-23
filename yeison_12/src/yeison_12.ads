@@ -15,8 +15,10 @@ package Yeison_12 is
                          Big_Real, Big_Real'Wide_Wide_Image);
 
    type Any is new Impl.Any with null record with
-     Constant_Indexing => Const_Ref,
+     --  Constant_Indexing => Const_Ref,
      Variable_Indexing => Reference;
+   --  Enabling constant indexing limits how we can use indexing in transient
+   --  expressions. Not sure this is entirely a good idea...
 
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
@@ -60,12 +62,12 @@ package Yeison_12 is
    --  We need to recreate references for the access discriminant to use the
    --  proper type...
 
-   function Const_Ref (This : aliased Any; Pos : Any) return Const with
+   function Const_Ref (This : Any; Pos : Any) return Const with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  See notes on Reference below. Same applies, except for the
    --  initialization of empty maps/vectors.
 
-   function Reference (This : aliased Any; Pos : Any) return Ref with
+   function Reference (This : Any; Pos : Any) return Ref with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  Any may be a scalar, which will be used as key/index, or a vector that
    --  will be consumed one element at a time. In YAML, keys can be complex
@@ -76,5 +78,9 @@ package Yeison_12 is
    --  force either one, assign first an empty value.
 
    function Self (This : aliased Any) return Ref;
+
+private
+
+   Unimplemented : exception;
 
 end Yeison_12;

@@ -5,6 +5,9 @@ with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 --  with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
+--  with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
+
+--  with GNAT.IO; use GNAT.IO;
 
 with Yeison_Utils;
 
@@ -111,6 +114,13 @@ package body Yeison_Generic is
 
    function As_Int (This : Any) return Long_Long_Integer
    is (To_Integer (This.Impl.Int));
+
+   -------------
+   -- As_Text --
+   -------------
+
+   function As_Text (This : Any) return Text
+   is (Ada.Strings.Wide_Wide_Unbounded.To_Wide_Wide_String (This.Impl.Str));
 
    ---------------
    -- Empty_Map --
@@ -509,7 +519,7 @@ package body Yeison_Generic is
       -- Reference --
       ---------------
 
-      function Reference (This : aliased Any; Pos : Any) return Ref
+      function Reference (This : Any; Pos : Any) return Ref
       is
 
          ----------------------
@@ -528,7 +538,7 @@ package body Yeison_Generic is
          -- Ref_By_Scalar --
          -------------------
 
-         function Ref_By_Scalar (This : aliased Any;
+         function Ref_By_Scalar (This : Any;
                                  Pos  : Any)
                                  return Ref is
          begin
@@ -537,12 +547,12 @@ package body Yeison_Generic is
 
             if not This.Is_Valid then
                case Pos.Kind is
-               when Int_Kind =>
-                  Self (This).all := Empty_Vec;
-               when Map_Kind =>
-                  Constraint_Error ("null Any with map", Pos);
-               when others =>
-                  Self (This).all := Empty_Map;
+                  when Int_Kind =>
+                     Self (This).all := To_Any (Empty_Vec);
+                  when Map_Kind =>
+                     Constraint_Error ("null Any with map", Pos);
+                  when others =>
+                     Self (This).all := To_Any (Empty_Map);
                end case;
             end if;
 
@@ -560,11 +570,11 @@ package body Yeison_Generic is
                --  TODO: use cursors to avoid double lookup
 
                if not This.Impl.Map.Contains (Pos) then
-                  This.Impl.Map.Insert (Pos, References.Invalid);
+                  This.Impl.Map.Insert (Pos, To_Any (Invalid));
                end if;
 
                return Self
-                 (Any (This.Impl.Map.Constant_Reference (Pos).Element.all));
+                 (This.Impl.Map.Constant_Reference (Pos).Element.all);
 
             when others =>
                if Long_Long_Integer (This.Impl.Vec.Length) + 1 < Pos.As_Int
@@ -575,11 +585,11 @@ package body Yeison_Generic is
                end if;
 
                if Long_Long_Integer (This.Impl.Vec.Length) < Pos.As_Int then
-                  This.Impl.Vec.Append (References.Invalid);
+                  This.Impl.Vec.Append (To_Any (Invalid));
                end if;
 
-               return Self (Any (This.Impl.Vec.Constant_Reference
-                            (Pos.As_Int).Element.all));
+               return Self (This.Impl.Vec.Constant_Reference
+                            (Pos.As_Int).Element.all);
             end case;
          end Ref_By_Scalar;
 
@@ -601,8 +611,10 @@ package body Yeison_Generic is
       -- Self --
       ----------
 
-      function Self (This : aliased Any) return Ref
-      is (This'Unrestricted_Access);
+      function Self (This : Yeison_Generic.Any'Class) return Ref
+      is (if This in Any
+          then Any (This)'Unrestricted_Access
+          else Self (To_Any (Yeison_Generic.Any (This))));
 
    end References;
 
