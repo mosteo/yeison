@@ -1,7 +1,5 @@
 package body Yeison is
 
-   Unimplemented : exception;
-
    ------------
    -- To_Any --
    ------------
@@ -9,18 +7,9 @@ package body Yeison is
    function To_Any (This : Impl.Any) return Any
    is (This with null record);
 
-   package References is new Impl.References (Any, To_Any) with Unreferenced;
+   package Operators is new Impl.Operators (Any);
 
-   ---------------
-   -- Operators --
-   ---------------
-
-   package body Operators is
-
-      function "/" (L, R : Any) return Any
-      is (Impl."/" (Impl.Any (L), Impl.Any (R)) with null record);
-
-   end Operators;
+   package References is new Impl.References (Any);
 
    ------------
    -- As_Ref --
@@ -38,7 +27,7 @@ package body Yeison is
                      Value : Any)
    is
    begin
-      Impl.Any (This).Initialize (Key, Impl.Any (Value));
+      This.Insert (To_Str (Key), Value, Replace => False);
    end Insert;
 
    ------------
@@ -46,44 +35,33 @@ package body Yeison is
    ------------
 
    function To_Int (Img : String) return Any
-   is (Make_Int (Big_Integers.From_String (Img)));
+   is (Operators.Make.Int (Big_Integers.From_String (Img)));
 
    -------------
    -- To_Real --
    -------------
 
    function To_Real (Img : String) return Any
-   is (raise Unimplemented);
+   is (Operators.Make.Real (Big_Reals.From_String (Img)));
 
    ------------
    -- To_Str --
    ------------
 
-   overriding
-   function To_Str (Img : Text) return Any
-   is (Impl.To_Str (Img) with null record);
+   function To_Str (Img : Text) return Any renames Operators.Make.Str;
 
    ---------------
    -- Const_Ref --
    ---------------
 
    function Const_Ref (This : aliased Any; Pos : Any) return Const
-   is (raise Unimplemented);
+   is (Element => References.Reference (This, Pos));
 
    ---------------
    -- Reference --
    ---------------
 
    function Reference (This : aliased Any; Pos : Any) return Ref
-   is (raise Unimplemented);
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append (This : in out Vec_Aux; Elem : Any) is
-   begin
-      This.Vec.Append (Elem);
-   end Append;
+   is (Element => References.Reference (This, Pos));
 
 end Yeison;

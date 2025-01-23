@@ -2,8 +2,8 @@ pragma Ada_2012;
 
 with Ada.Finalization;
 
---  private with Ada.Numerics.Big_Numbers.Big_Integers;
---  private with Ada.Numerics.Big_Numbers.Big_Reals;
+private with Ada.Containers.Indefinite_Ordered_Maps;
+private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Wide_Wide_Unbounded;
 
 generic
@@ -17,7 +17,7 @@ generic
    with function Image (R : Real_Type) return Wide_Wide_String is <>;
    with function "<" (L, R : Int_Type) return Boolean is <>;
    with function "<" (L, R : Real_Type) return Boolean is <>;
-package Yeison_Generic is
+package Yeison_Generic with Preelaborate is
 
    --  This should be Preelaborate but a suspicious errors in the body
    --  precludes it for now. TODO: To be investigated.
@@ -127,21 +127,36 @@ package Yeison_Generic is
    ---------------
 
    generic
-      type Any is new Yeison_Generic.Any with private;
-      with function To_Any (This : Yeison_Generic.Any) return Any is <>;
+      type Client_Any is new Yeison_Generic.Any with private;
+      with function To_Any (This : Yeison_Generic.Any) return Client_Any is <>;
    package Operators is
 
-      function "/" (L, R : Any) return Any with
+      ---------
+      -- "/" --
+      ---------
+
+      function "/" (L, R : Client_Any) return Client_Any with
         Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
         Post => "/"'Result.Kind = Vec_Kind;
 
-      package Make is
-         function Int (This : Int_Type) return Any;
-         function Str (This : Text) return Any;
-      end Make;
+      --  Temporary workaround until both Add_Named and Add_Unnamed can be used
+      --  simultaneously on the same type. It's convenient having it here so
+      --  "+" becomes visible with the rest.
 
-      function "+" (This : Int_Type) return Any renames Make.Int;
-      function "+" (This : Text) return Any renames Make.Str;
+      type Any_Array is array (Positive range <>) of Client_Any;
+
+      function Vec (This : Any_Array) return Client_Any with
+        Post => Vec'Result.Kind = Vec_Kind;
+
+      ----------
+      -- Make --
+      ----------
+
+      package Make is
+         function Int (This : Int_Type) return Client_Any;
+         function Real (This : Real_Type) return Client_Any;
+         function Str (This : Text) return Client_Any;
+      end Make;
 
    end Operators;
 
@@ -151,7 +166,7 @@ package Yeison_Generic is
 
    generic
       type Any is new Yeison_Generic.Any with private;
-      with function To_Any (This : Yeison_Generic.Any) return Any;
+      with function To_Any (This : Yeison_Generic.Any) return Any is <>;
       --  To avoid mistypes
    package References is
 
@@ -211,5 +226,19 @@ private
    type Vec is record
       Vec : Any;
    end record;
+
+   --  These could go in the body if not because of
+   --  https://forum.ada-lang.io/t/bug-or-legit-instantiation-in-body-of-
+   --  preelaborable-generic-complains-about-non-static-constant/1742
+
+   package Any_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (Any'Class, Any'Class,
+                                                 "<" => Precedes);
+
+   subtype Long_Long_Positive is
+     Long_Long_Integer range 1 .. Long_Long_Integer'Last;
+
+   package Any_Vectors is
+     new Ada.Containers.Indefinite_Vectors (Long_Long_Positive, Any'Class);
 
 end Yeison_Generic;

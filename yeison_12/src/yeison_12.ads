@@ -39,13 +39,6 @@ package Yeison_12 is
 
    subtype Text is Impl.Text;
 
-   --  Ada 2012-specific helpers
-
-   type Any_Array is array (Positive range <>) of Any;
-
-   function To_Vec (A : Any_Array) return Any
-     with Post => To_Vec'Result.Kind = Vec_Kind;
-
    ----------------
    --  Indexing  --
    ----------------
@@ -80,13 +73,21 @@ package Yeison_12 is
    -- Operators --
    ---------------
 
-   package Operators is new Impl.Operators (Any);
+   package Operators is
+
+      package Impl is new Yeison_12.Impl.Operators (Any);
+
+      function "+" (This : Big_Int) return Any renames Impl.Make.Int;
+      function "+" (This : Text) return Any renames Impl.Make.Str;
+      function To_Vec (This : Impl.Any_Array) return Any renames Impl.Vec;
+
+   end Operators;
 
    ----------
    -- Make --
    ----------
 
-   package Make renames Operators.Make;
+   package Make renames Operators.Impl.Make;
 
 private
 

@@ -9,19 +9,6 @@ package body Yeison_12 is
 
    package References is new Impl.References (Any, To_Any);
 
-   ------------
-   -- To_Vec --
-   ------------
-
-   function To_Vec (A : Any_Array) return Any is
-   begin
-      return Result : Any := Empty_Vec do
-         for Elem of A loop
-            Result.Append (Elem);
-         end loop;
-      end return;
-   end To_Vec;
-
    ---------------
    -- Const_Ref --
    ---------------

@@ -1,4 +1,4 @@
-with Yeison; use Yeison.Operators;
+with Yeison.Operators; use Yeison.Operators;
 
 with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 

@@ -1,4 +1,4 @@
-package Yeison_Utils is
+package Yeison_Utils with Preelaborate is
 
    --  Miscellanea supporting code of maybe interest elsewhere
 

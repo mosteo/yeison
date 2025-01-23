@@ -1,4 +1,4 @@
-with Yeison; use Yeison; use Yeison.Operators;
+with Yeison.Operators; use Yeison; use Yeison.Operators;
 
 package Test_Crate with Elaborate_Body is
 
@@ -19,9 +19,9 @@ package Test_Crate with Elaborate_Body is
          "maintainers"   => +["mosteo", "chouteau"],
 
          "depends-on" =>
-           Map'["aaa"      => "~0.2.3",
-                "ada_toml" => "~0.1",
-                "spdx"     => "~0.2"],
+           ["aaa"      => "~0.2.3",
+            "ada_toml" => "~0.1",
+            "spdx"     => "~0.2"],
 
          "pins" =>
            Map'["ada_toml" => [URL => "http://adatoml", Commit => "abcd"],

@@ -1,13 +1,11 @@
 with Ada.Characters.Wide_Wide_Latin_1;
-with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
 pragma Warnings (Off);
-with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
+--  with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 with GNAT.IO; use GNAT.IO;
 pragma Warnings (On);
 
@@ -20,16 +18,6 @@ package body Yeison_Generic is
    use all type Ada.Strings.Trim_End;
 
    subtype Any_Parent is Ada.Finalization.Controlled;
-
-   package Any_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (Any'Class, Any'Class,
-                                                 "<" => Precedes);
-
-   subtype Long_Long_Positive is
-     Long_Long_Integer range 1 .. Long_Long_Integer'Last;
-
-   package Any_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Long_Long_Positive, Any'Class);
 
    type Any_Impl (Kind : Kinds := Bool_Kind) is record
       case Kind is
@@ -63,15 +51,15 @@ package body Yeison_Generic is
       -- "/" --
       ---------
 
-      function "/" (L, R : Any) return Any is
+      function "/" (L, R : Client_Any) return Client_Any is
       begin
          if L.Kind in Scalar_Kinds then
-            return Result : Any := Empty_Vec do
+            return Result : Client_Any := Empty_Vec do
                Result.Append (L);
                Result.Append (R);
             end return;
          elsif L.Kind in Vec_Kind then
-            return Result : Any := L do
+            return Result : Client_Any := L do
                Result.Append (R);
             end return;
          else
@@ -91,23 +79,46 @@ package body Yeison_Generic is
          -- Int --
          ---------
 
-         function Int (This : Int_Type) return Any
+         function Int (This : Int_Type) return Client_Any
          is (To_Any
              ((Any_Parent with Impl => new Any_Impl'
                  (Kind => Int_Kind,
                   Int  => This))));
 
+         ----------
+         -- Real --
+         ----------
+
+         function Real (This : Real_Type) return Client_Any
+         is (To_Any
+             ((Any_Parent with Impl => new Any_Impl'
+                 (Kind => Real_Kind,
+                  Real => This))));
+
          ---------
          -- Str --
          ---------
 
-         function Str (This : Wide_Wide_String) return Any
+         function Str (This : Wide_Wide_String) return Client_Any
          is (To_Any
              ((Any_Parent with Impl => new Any_Impl'
                  (Kind => Str_Kind,
                   Str  => +This))));
 
       end Make;
+
+      ---------
+      -- Vec --
+      ---------
+
+      function Vec (This : Any_Array) return Client_Any is
+      begin
+         return Result : Client_Any := Empty_Vec do
+            for Elem of This loop
+               Result.Append (Elem);
+            end loop;
+         end return;
+      end Vec;
 
    end Operators;
 
@@ -177,7 +188,11 @@ package body Yeison_Generic is
    -- False --
    -----------
 
-   function False return Any is (raise Unimplemented);
+   function False return Any
+   is (Any_Parent with
+         Impl => new Any_Impl'
+           (Kind => Bool_Kind,
+            Bool => True));
 
    ----------------
    -- JSON_Quote --

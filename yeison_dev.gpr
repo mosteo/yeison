@@ -5,7 +5,7 @@ aggregate project Yeison_Dev is
    for Project_Path use ("yeison_12",
                          "yeison_22");
 
-   for Project_Files use ("yeison_12/test/test.gpr",
+   for Project_Files use ("yeison_12/test/test_12.gpr",
                           "yeison_22/test/test.gpr");
 
 end Yeison_Dev;

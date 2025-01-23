@@ -6,7 +6,7 @@ with Ada.Numerics.Big_Numbers.Big_Reals;
 
 with Yeison_Generic;
 
-package Yeison is
+package Yeison with Preelaborate is
 
    ---------------------
    --  Preliminaries  --
@@ -61,20 +61,29 @@ package Yeison is
    --  Check Yeison_Generic spec for the full features of the type that are
    --  inherited here.
 
+   --  These are problematic, as declaring using them doesn't really assign
+   --  the expected kind to the variable, and for maps and vectors it results
+   --  in spurious invalid initialization. Use at your own risk, they'll be
+   --  probably deprecated at some point...
+
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
-   subtype Map is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
+   subtype Map is Any with
+     Dynamic_Predicate => not Map.Is_Valid or else Map.Kind = Map_Kind;
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
-   subtype Vec is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
+   subtype Vec is Any with
+     Dynamic_Predicate => not Vec.Is_Valid or else Vec.Kind = Vec_Kind;
+
+   function To_Any (This : Impl.Any) return Any;
 
    ---------------
    --  Scalars  --
    ---------------
 
-   function To_Int (Img : String) return Any;
+   function To_Int  (Img : String) return Any;
    function To_Real (Img : String) return Any;
-   overriding function To_Str (Img : Text) return Any;
+   function To_Str  (Img : Text) return Any;
 
    -----------
    --  Map  --
@@ -86,41 +95,9 @@ package Yeison is
                      Key   : Text;
                      Value : Any);
 
-   -----------
-   --  Vec  --
-   -----------
-
-   --  Auxiliary type needed until GNAT accepts both Add_Named and Add_Unnamed
-   --  aspects.
-
-   type Vec_Aux is private with
-     Aggregate => (Empty       => Empty_Vec_Aux,
-                   Add_Unnamed => Append);
-
-   function Empty_Vec_Aux return Vec_Aux;
-
-   procedure Append (This : in out Vec_Aux; Elem : Any);
-
-   function To_Vec (This : Vec_Aux) return Any;
-   function V (This : Vec_Aux) return Any renames To_Vec;
-
-   ---------------
-   -- Operators --
-   ---------------
-
-   package Operators is
-
-      function "+" (This : Vec_Aux) return Any renames To_Vec;
-
-      function "/" (L, R : Any) return Any with
-        Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
-        Post => "/"'Result.Kind in Vec_Kind;
-
-   end Operators;
-
-   -------------------
-   --  Boilerplate  --
-   -------------------
+   ----------------
+   --  Indexing  --
+   ----------------
 
    --  References and the like for indexing. Not really directly interesting.
 
@@ -151,13 +128,19 @@ package Yeison is
    --  map) depending on Any.Kind being Int or something else. If you want to
    --  force either one, assign first an empty value.
 
+   ---------------
+   -- Operators --
+   ---------------
+
+   --  Cannot be instantiated here as Any must be private. Simply with and use
+   --  Yeison.Operators.
+
 private
 
-   type Any is new Impl.Any with null record;
+   Unimplemented : exception;
 
-   type Vec_Aux is record
-      Vec : Any;
-   end record;
+   type Any is new Impl.Any with null record;
+   --  Must be private to avoid error with [] getting confused
 
    package Charconv renames Ada.Characters.Conversions;
 
@@ -174,17 +157,5 @@ private
 
    function Image (R : Big_Reals.Big_Real) return Wide_Wide_String
    is (Charconv.To_Wide_Wide_String (Big_Reals.To_String (R)));
-
-   -------------------
-   -- Empty_Vec_Aux --
-   -------------------
-
-   function Empty_Vec_Aux return Vec_Aux is (Vec => Empty_Vec);
-
-   ---------
-   -- Vec --
-   ---------
-
-   function To_Vec (This : Vec_Aux) return Any is (This.Vec);
 
 end Yeison;
