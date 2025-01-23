@@ -1,8 +1,9 @@
 with Ada.Characters.Wide_Wide_Latin_1;
-with Ada.Containers.Ordered_Maps;
-with Ada.Containers.Vectors;
+with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+--  with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
 with Yeison_Utils;
@@ -15,15 +16,15 @@ package body Yeison_Generic is
 
    subtype Any_Parent is Ada.Finalization.Controlled;
 
-   pragma Suppress (Container_Checks);
    package Any_Maps is
-     new Ada.Containers.Ordered_Maps (Any, Any);
+     new Ada.Containers.Indefinite_Ordered_Maps (Any'Class, Any'Class,
+                                                 "<" => Precedes);
 
    subtype Long_Long_Positive is
      Long_Long_Integer range 1 .. Long_Long_Integer'Last;
 
    package Any_Vectors is
-     new Ada.Containers.Vectors (Long_Long_Positive, Any);
+     new Ada.Containers.Indefinite_Vectors (Long_Long_Positive, Any'Class);
 
    type Any_Impl (Kind : Kinds := Bool_Kind) is record
       case Kind is
@@ -41,6 +42,36 @@ package body Yeison_Generic is
             Vec  : Any_Vectors.Vector;
       end case;
    end record;
+
+   ---------------
+   -- Operators --
+   ---------------
+
+   package body Operators is
+
+      ---------
+      -- "/" --
+      ---------
+
+      function "/" (L, R : Any) return Any is
+      begin
+         if L in Any_Scalar then
+            return Result : Any := Empty_Vec do
+               Result.Append (L);
+               Result.Append (R);
+            end return;
+         elsif L in Any_Vec then
+            return Result : Any := L do
+               Result.Append (R);
+            end return;
+         else
+            raise Constraint_Error with
+              "Cannot append using ""/"" when left operator is: "
+              & L.Kind'Image;
+         end if;
+      end "/";
+
+   end Operators;
 
    ---------
    -- "<" --
@@ -112,6 +143,13 @@ package body Yeison_Generic is
       return '"' & Yeison_Utils.JSON_Escape (Str) & '"';
    end JSON_Quote;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This : Any; Pos : Any) return Any
+   is (raise Unimplemented);
+
    -----------
    -- Image --
    -----------
@@ -129,7 +167,7 @@ package body Yeison_Generic is
       -- Scalar_Image --
       ------------------
 
-      function Scalar_Image (This : Any) return Text
+      function Scalar_Image (This : Any'Class) return Text
       is (case This.Kind is
              when Bool_Kind       =>
                 (if This.Impl.Bool then "true" else "false"),
@@ -214,7 +252,7 @@ package body Yeison_Generic is
       -- Traverse --
       --------------
 
-      procedure Traverse (This   : Any;
+      procedure Traverse (This   : Any'Class;
                           Prefix : Text;
                           Contd  : Boolean := False)
       is
@@ -340,13 +378,6 @@ package body Yeison_Generic is
    function Kind (This : Any) return Kinds
    is (This.Impl.Kind);
 
-   ----------
-   -- Self --
-   ----------
-
-   function Self (This : aliased Any) return Ref
-   is (Element => This'Unrestricted_Access);
-
    ------------
    -- To_Str --
    ------------
@@ -416,13 +447,6 @@ package body Yeison_Generic is
       This.Impl.Vec.Append (Elem);
    end Append;
 
-   ---------------
-   -- Const_Ref --
-   ---------------
-
-   function Const_Ref (This : aliased Any; Pos : Any) return Const
-   is (raise Unimplemented);
-
    ----------------
    -- Initialize --
    ----------------
@@ -475,65 +499,72 @@ package body Yeison_Generic is
       Free (This.Impl);
    end Finalize;
 
-   ---------------
-   -- Reference --
-   ---------------
+   ----------------
+   -- References --
+   ----------------
 
-   function Reference (This : aliased Any; Pos : Any) return Ref
-   is
+   package body References is
 
-      procedure Constraint_Error (Msg : String; Pos : Any) with No_Return;
+      ---------------
+      -- Reference --
+      ---------------
 
-      ----------------------
-      -- Constraint_Error --
-      ----------------------
+      function Reference (This : aliased Any; Pos : Any) return Ref
+      is
 
-      procedure Constraint_Error (Msg : String; Pos : Any) is
-         use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
-      begin
-         raise Standard.Constraint_Error
-           with "cannot index " & Msg & " when index is "
-           & Encode (Pos.Image);
-      end Constraint_Error;
+         ----------------------
+         -- Constraint_Error --
+         ----------------------
 
-      -------------------
-      -- Ref_By_Scalar --
-      -------------------
+         procedure Constraint_Error (Msg : String; Pos : Any'Class) is
+            use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+         begin
+            raise Standard.Constraint_Error
+              with "cannot index " & Msg & " when index is "
+              & Encode (Pos.Image);
+         end Constraint_Error;
 
-      function Ref_By_Scalar (This : aliased Any; Pos : Any) return Ref is
-      begin
+         -------------------
+         -- Ref_By_Scalar --
+         -------------------
 
-         --  Initialize empty vec/map if needed
+         function Ref_By_Scalar (This : aliased Any;
+                                 Pos  : Any)
+                                 return Ref is
+         begin
 
-         if not This.Is_Valid then
-            case Pos.Kind is
+            --  Initialize empty vec/map if needed
+
+            if not This.Is_Valid then
+               case Pos.Kind is
                when Int_Kind =>
-                  This.Self := Empty_Vec;
+                  Self (This).all := Empty_Vec;
                when Map_Kind =>
                   Constraint_Error ("null Any with map", Pos);
                when others =>
-                  This.Self := Empty_Map;
-            end case;
-         end if;
+                  Self (This).all := Empty_Map;
+               end case;
+            end if;
 
-         --  Access the position. At this point Pos must be a scalar
+            --  Access the position. At this point Pos must be a scalar
 
-         case This.Kind is
+            case This.Kind is
             when Scalar_Kinds =>
                if Pos.Kind /= Int_Kind or else Pos.As_Int /= 1 then
                   Constraint_Error ("scalar value with any /= 1", Pos);
                end if;
 
-               return This.Self;
+               return Self (This);
 
             when Map_Kind =>
                --  TODO: use cursors to avoid double lookup
 
                if not This.Impl.Map.Contains (Pos) then
-                  This.Impl.Map.Insert (Pos, Invalid);
+                  This.Impl.Map.Insert (Pos, References.Invalid);
                end if;
 
-               return This.Impl.Map.Constant_Reference (Pos).Self;
+               return Self
+                 (Any (This.Impl.Map.Constant_Reference (Pos).Element.all));
 
             when others =>
                if Long_Long_Integer (This.Impl.Vec.Length) + 1 < Pos.As_Int
@@ -544,25 +575,36 @@ package body Yeison_Generic is
                end if;
 
                if Long_Long_Integer (This.Impl.Vec.Length) < Pos.As_Int then
-                  This.Impl.Vec.Append (Invalid);
+                  This.Impl.Vec.Append (References.Invalid);
                end if;
 
-               return This.Impl.Vec.Constant_Reference (Pos.As_Int).Self;
-         end case;
-      end Ref_By_Scalar;
+               return Self (Any (This.Impl.Vec.Constant_Reference
+                            (Pos.As_Int).Element.all));
+            end case;
+         end Ref_By_Scalar;
 
-   begin
-      case Pos.Kind is
-         when Map_Kind =>
-            Constraint_Error ("with a map", Pos);
-         when Vec_Kind =>
-            raise Unimplemented;
-            --  Get first and continue indexing
-         when Scalar_Kinds =>
-            --  We can already return a reference
-            return Ref_By_Scalar (This, Pos);
-      end case;
-   end Reference;
+      begin
+         case Pos.Kind is
+            when Map_Kind =>
+               Constraint_Error ("with a map", Pos);
+               return null;
+            when Vec_Kind =>
+               raise Unimplemented;
+               --  Get first and continue indexing
+            when Scalar_Kinds =>
+               --  We can already return a reference
+               return Ref_By_Scalar (This, Pos);
+         end case;
+      end Reference;
+
+      ----------
+      -- Self --
+      ----------
+
+      function Self (This : aliased Any) return Ref
+      is (This'Unrestricted_Access);
+
+   end References;
 
    ----------
    -- True --

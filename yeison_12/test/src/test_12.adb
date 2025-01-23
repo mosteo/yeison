@@ -56,7 +56,7 @@ begin
            Empty_Map
            .Insert (+"one", +"one")
            .Insert (+"two", +2)
-           .Insert (+"three", Vec ((+1, +"two", +3)))
+           .Insert (+"three", To_Vec ((+1, +"two", +3)))
            .Insert (+"four", Empty_Map.Insert (+"4a", +4)));
 
    declare
@@ -69,8 +69,8 @@ begin
    --  Vectors
 
    Report ("empty vec", Empty_Vec);
-   Report ("homo vec", Vec ((+1, +2, +3)));
-   Report ("hetero vec", Vec ((+1, +"two", +3)));
+   Report ("homo vec", To_Vec ((+1, +2, +3)));
+   Report ("hetero vec", To_Vec ((+1, +"two", +3)));
 
    declare
       V : Any;

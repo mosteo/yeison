@@ -58,12 +58,6 @@ package Yeison_Generic is
 
    --  TODO: remove tagged once GNAT accepts dot notation for all private types
 
-   --  type Ref (Element : not null access Any) is limited null record with
-   --    Implicit_Dereference => Element;
-   --
---  type Const (Element : not null access constant Any) is limited null record
-   --    with Implicit_Dereference => Element;
-
    --------------
    --  Common  --
    --------------
@@ -82,24 +76,6 @@ package Yeison_Generic is
 
    function Kind (This : Any) return Kinds with
      Pre => This.Is_Valid;
-
-   --  function Const_Ref (This : aliased Any; Pos : Any) return Const with
-   --    Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
-   --  --  See notes on Reference below. Same applies, except for the
-   --  --  initialization of empty maps/vectors.
-   --
-   --  function Reference (This : aliased Any; Pos : Any) return Ref with
-   --    Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
-   --  Any may be a scalar, which will be used as key/index, or a vector that
-   --  will be consumed one element at a time. In YAML, keys can be complex
-   --  types, which is discouraged, and this is explicitly not supported.
-   --
-   --  If This is invalid, the appropriate holder value will be created (vec or
-   --  map) depending on Any.Kind being Int or something else. If you want to
-   --  force either one, assign first an empty value.
-
---   function Self (This : aliased Any) return Ref;
-   --  A reference without indexing, mainly useful for testing
 
    ---------------
    --  Scalars  --
@@ -122,7 +98,7 @@ package Yeison_Generic is
    ------------
 
    function Empty_Map return Any
-     with Post => Empty_Map'Result in Any_Map;
+     with Post => Empty_Map'Result.Kind = Map_Kind;
 
    --  Not named Insert to avoid ambiguities with Add_Named aspect
    procedure Initialize (This  : in out Any;
@@ -157,7 +133,7 @@ package Yeison_Generic is
    ---------------
 
    procedure Append (This : in out Any; Elem : Any) with
-     Pre => This in Any_Vec;
+     Pre => This.Kind = Vec_Kind;
 
    function Empty_Vec return Any;
 
@@ -166,13 +142,17 @@ package Yeison_Generic is
    ----------------
 
    function Get (This : Any; Pos : Any) return Any with
-     Pre => This in Any_Composite and then Pos in Any_Scalar;
+     Pre => This.Kind in Composite_Kinds and then Pos.Kind in Scalar_Kinds;
+
+   ---------------
+   -- Operators --
+   ---------------
 
    package Operators is
 
       function "/" (L, R : Any) return Any with
         Pre  => L.Kind in Scalar_Kinds | Vec_Kind,
-        Post => "/"'Result in Any_Vec;
+        Post => "/"'Result.Kind = Vec_Kind;
 
    end Operators;
 
@@ -181,6 +161,35 @@ package Yeison_Generic is
    -------------------
 
    function To_Str (Img : Wide_Wide_String) return Any;
+
+   ----------------
+   -- References --
+   ----------------
+
+   generic
+      type Any is new Yeison_Generic.Any with private;
+   package References is
+
+      --  We don't want these to be primitive as that causes ambiguities in
+      --  the derived types usage.
+
+      type Ref is access Any;
+
+      function Reference (This : aliased Any; Pos : Any) return Ref with
+        Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
+      --  Any may be a scalar, which will be used as key/index, or a vector
+      --  that will be consumed one element at a time. In YAML, keys can be
+      --  complex types, which is discouraged, and this is explicitly not
+      --  supported.
+      --
+      --  If This is invalid, the appropriate holder value will be created (vec
+      --  or map) depending on Any.Kind being Int or something else. If you
+      --  want to force either one, assign first an empty value.
+
+      function Self (This : aliased Any) return Ref;
+      --  A reference without indexing, mainly useful for testing
+
+   end References;
 
 private
 
@@ -211,10 +220,14 @@ private
 
    function "<" (L, R : Any) return Boolean;
 
+   function Precedes (L, R : Any) return Boolean renames "<";
+
    overriding procedure Adjust (This : in out Any);
 
    overriding procedure Finalize (This : in out Any);
 
-   type Vec is new Any with null record;
+   type Vec is record
+      Vec : Any_Vec;
+   end record;
 
 end Yeison_Generic;

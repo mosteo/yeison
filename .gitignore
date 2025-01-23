@@ -3,3 +3,7 @@ obj/
 lib/
 alire/
 config/
+
+*-loc.xml
+
+gpsauto.cgpr
