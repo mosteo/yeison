@@ -435,6 +435,26 @@ package body Yeison_Generic is
    is (This.Impl /= null);
 
    ----------
+   -- Keys --
+   ----------
+
+   function Keys (This : Any) return Any_Array is
+      Result : Any_Array (1 .. Integer (This.Impl.Map.Length));
+      Pos    : Positive := 1;
+   begin
+      for I in This.Impl.Map.Iterate loop
+         declare
+            Key : constant Any'Class := Any_Maps.Key (I);
+         begin
+            Result (Pos) := Any (Key);
+         end;
+         Pos := Pos + 1;
+      end loop;
+
+      return Result;
+   end Keys;
+
+   ----------
    -- Kind --
    ----------
 

@@ -2,7 +2,7 @@ pragma Ada_2012;
 
 with Yeison_Generic;
 
-package Yeison_12 is
+package Yeison_12 with Preelaborate is
 
    subtype Big_Int is Long_Long_Integer;
 

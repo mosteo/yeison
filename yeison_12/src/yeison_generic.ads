@@ -37,7 +37,7 @@ package Yeison_Generic with Preelaborate is
 
    type Any is new Ada.Finalization.Controlled with private;
    --  No aspects here. This forces us to expose them in Yeison_12 and
-   --  Yesion_22, which involves some duplication, but otherwise there are
+   --  Yeison_22, which involves some duplication, but otherwise there are
    --  some ambiguities that rain on our parade...
 
    --  TODO: remove tagged once GNAT accepts dot notation for all private types
@@ -60,6 +60,8 @@ package Yeison_Generic with Preelaborate is
 
    function Kind (This : Any) return Kinds with
      Pre => This.Is_Valid;
+
+   type Any_Array is array (Positive range <>) of Any;
 
    ---------------
    --  Scalars  --
@@ -105,6 +107,12 @@ package Yeison_Generic with Preelaborate is
                     Value   : Any;
                     Replace : Boolean := False)
                     return Any;
+
+   function Keys (This : Any) return Any_Array with
+     Pre => This.Kind = Map_Kind;
+   --  This is a chapuza until we have proper iteration over Any values. Note
+   --  that in the versioned clients, Any is of a different derived type!
+   --  That's why this doesn't have much future...
 
    ---------------
    --  Vectors  --
