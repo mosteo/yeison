@@ -1,0 +1,11 @@
+aggregate project Yeison_Dev is
+
+   for Create_Missing_Dirs use "True";
+
+   for Project_Path use ("yeison_12",
+                         "yeison_22");
+
+   for Project_Files use ("yeison_12/test/test_12.gpr",
+                          "yeison_22/test/test.gpr");
+
+end Yeison_Dev;

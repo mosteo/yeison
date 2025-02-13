@@ -1,4 +1,4 @@
-name: aaa
+name: Yeison_12
 
 on:
   push:
@@ -10,4 +10,4 @@ jobs:
   check:
     uses: ./.github/workflows/build.yml
     with:
-      crate: aaa_base
+      crate: yeison_12

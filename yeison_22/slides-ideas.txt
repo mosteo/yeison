@@ -1,0 +1,15 @@
+Start explaining single type version
+Problem with needed extra type only for vectors/maps
+Advantage of initialization not requiring qualification for the chosen primary
+initialization (but this might go away with future GNAT versions)
+
+Overload Insert/Append and rely on distinct types => doesn't work as only the
+last definition is recognized.
+
+Need for separate types but recognized as one -> classwide family
+Need for qualification (might be a bug in GNAT)
+For indexing can be worked around with regular array for multi-maps
+For mapping can be worked around with extra operator "/"
+
+Mixed indexing?
+   Literals and "/" to create the vector

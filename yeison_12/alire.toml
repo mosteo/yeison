@@ -1,0 +1,13 @@
+name = "yeison_12"
+description = "A JSON-like data structure (Ada 2012 version)"
+version = "0.2.0-dev"
+licenses = "MIT"
+
+authors = ["Alejandro R. Mosteo"]
+maintainers = ["Alejandro R. Mosteo <alejandro@mosteo.com>"]
+maintainers-logins = ["mosteo"]
+tags = ["json", "yaml", "toml", "containers"]
+website = "https://github.com/mosteo/yeison"
+
+[build-switches]
+"*".ada_version = "Ada12"
