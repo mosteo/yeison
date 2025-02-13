@@ -99,6 +99,11 @@ package Yeison with Preelaborate is
    --  Indexing  --
    ----------------
 
+   function Get (This, Pos : Any) return Any with
+     Pre => This.Kind in Composite_Kinds
+     and then Pos.Kind in Scalar_Kinds | Vec_Kind;
+   --  Note this always returns a copy; for in place modification use Ref
+
    --  References and the like for indexing. Not really directly interesting.
 
    type Ref (Element : not null access Any) is limited null record with

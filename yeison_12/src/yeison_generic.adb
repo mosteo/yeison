@@ -5,7 +5,6 @@ with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
 pragma Warnings (Off);
---  with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 with GNAT.IO; use GNAT.IO;
 pragma Warnings (On);
 
@@ -16,6 +15,14 @@ package body Yeison_Generic is
    package Fixed renames Ada.Strings.Wide_Wide_Fixed;
 
    use all type Ada.Strings.Trim_End;
+
+   pragma Warnings (Off);
+   function Encode (T : Text; Output_BOM : Boolean  := False) return String
+                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
+
+   function Decode (T : String) return Text
+                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Decode;
+   pragma Warnings (On);
 
    subtype Any_Parent is Ada.Finalization.Controlled;
 
@@ -202,13 +209,6 @@ package body Yeison_Generic is
    begin
       return '"' & Yeison_Utils.JSON_Escape (Str) & '"';
    end JSON_Quote;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (This : Any; Pos : Any) return Any
-   is (raise Unimplemented);
 
    -----------
    -- Image --
@@ -428,6 +428,18 @@ package body Yeison_Generic is
    is (Ada.Finalization.Controlled with Impl => null);
 
    --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (This : Any) return Boolean
+   is (case This.Kind is
+          when Map_Kind => This.Impl.Map.Is_Empty,
+          when Vec_Kind => This.Impl.Vec.Is_Empty,
+          when others   =>
+             raise Constraint_Error
+               with "not a collection: " & This.Kind_If_Valid);
+
+   --------------
    -- Is_Valid --
    --------------
 
@@ -460,6 +472,27 @@ package body Yeison_Generic is
 
    function Kind (This : Any) return Kinds
    is (This.Impl.Kind);
+
+   -------------------
+   -- Kind_If_Valid --
+   -------------------
+
+   function Kind_If_Valid (This : Any) return String
+   is (if This.Is_Valid
+       then This.Kind'Image
+       else "(invalid)");
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (This : Any) return Universal_Integer
+   is (case This.Kind is
+          when Map_Kind => Universal_Integer (This.Impl.Map.Length),
+          when Vec_Kind => Universal_Integer (This.Impl.Vec.Length),
+          when others   =>
+             raise Constraint_Error
+               with "not a collection: " & This.Kind_If_Valid);
 
    ---------
    -- "<" --
@@ -553,6 +586,27 @@ package body Yeison_Generic is
    package body References is
 
       ----------
+      -- Head --
+      ----------
+
+      function Head (This : Any) return Any
+      is (Any (This.Impl.Vec.First_Element));
+
+      ----------
+      -- Tail --
+      ----------
+
+      function Tail (This : Any) return Any is
+      begin
+         return Result : Any := To_Any (Empty_Vec) do
+            for I in This.Impl.Vec.First_Index + 1 .. This.Impl.Vec.Last_Index
+            loop
+               Result.Append (Any (This.Impl.Vec (I).Element.all));
+            end loop;
+         end return;
+      end Tail;
+
+      ----------
       -- Self --
       ----------
 
@@ -571,6 +625,13 @@ package body Yeison_Generic is
           else To_Any (Yeison_Generic.Any (This)));
       pragma Unreferenced (Wrap);
 
+      ---------
+      -- Get --
+      ---------
+
+      function Get (This : Any; Pos : Any) return Any
+      is (Reference (This, Pos).all);
+
       ---------------
       -- Reference --
       ---------------
@@ -583,7 +644,6 @@ package body Yeison_Generic is
          ----------------------
 
          procedure Constraint_Error (Msg : String; Pos : Any'Class) is
-            use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
          begin
             raise Standard.Constraint_Error
               with "cannot index " & Msg & " when index is "
@@ -660,12 +720,22 @@ package body Yeison_Generic is
             when Map_Kind =>
                Constraint_Error ("with a map", Pos);
                return null;
+
             when Vec_Kind =>
-               raise Unimplemented;
-               --  Get first and continue indexing
+               if Pos.Is_Empty then
+                  raise Standard.Constraint_Error
+                    with "cannot index with empty vector";
+               elsif Pos.Length = 1 then
+                  return Reference (This, Head (Pos));
+               else
+                  return Reference (Reference (This, Head (Pos)).all,
+                                    Tail (Pos));
+               end if;
+
             when Scalar_Kinds =>
                --  We can already return a reference
                return Ref_By_Scalar (This, Pos);
+
          end case;
       end Reference;
 

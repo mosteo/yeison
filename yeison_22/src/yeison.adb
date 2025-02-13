@@ -57,6 +57,13 @@ package body Yeison is
    function Const_Ref (This : aliased Any; Pos : Any) return Const
    is (Element => References.Reference (This, Pos));
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get (This, Pos : Any) return Any
+   renames References.Get;
+
    ---------------
    -- Reference --
    ---------------

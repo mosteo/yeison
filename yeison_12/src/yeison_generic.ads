@@ -8,8 +8,9 @@ private with Ada.Strings.Wide_Wide_Unbounded;
 
 generic
    --  Because big numbers aren't available in Ada 2012, and no other
-   --  convenient implementation is available that I know, we just
-   --  delegate this impl to clients.
+   --  convenient implementation is available that I know, we just delegate
+   --  this impl to clients. This limits us currently to Long_Long_Integer
+   --  as the max length of vectors.
    type Int_Type is private; -- not range <> to allow Big_Integer
    with function To_Integer (I : Int_Type) return Long_Long_Integer;
    with function Image (I : Int_Type) return Wide_Wide_String is <>;
@@ -18,6 +19,8 @@ generic
    with function "<" (L, R : Int_Type) return Boolean is <>;
    with function "<" (L, R : Real_Type) return Boolean is <>;
 package Yeison_Generic with Preelaborate is
+
+   subtype Universal_Integer is Long_Long_Integer;
 
    --  This should be Preelaborate but a suspicious errors in the body
    --  precludes it for now. TODO: To be investigated.
@@ -77,6 +80,15 @@ package Yeison_Generic with Preelaborate is
 
    function As_Text (This : Any) return Text;
 
+   -------------------
+   --  Collections  --
+   -------------------
+
+   function Is_Empty (This : Any) return Boolean with
+     Pre => This.Kind in Composite_Kinds;
+
+   function Length (This : Any) return Universal_Integer;
+
    ------------
    --  Maps  --
    ------------
@@ -122,13 +134,6 @@ package Yeison_Generic with Preelaborate is
      Pre => This.Kind = Vec_Kind;
 
    function Empty_Vec return Any;
-
-   ----------------
-   --  Indexing  --
-   ----------------
-
-   function Get (This : Any; Pos : Any) return Any with
-     Pre => This.Kind in Composite_Kinds and then Pos.Kind in Scalar_Kinds;
 
    ---------------
    -- Operators --
@@ -194,6 +199,28 @@ package Yeison_Generic with Preelaborate is
       --  or map) depending on Any.Kind being Int or something else. If you
       --  want to force either one, assign first an empty value.
 
+      ----------------
+      --  Indexing  --
+      ----------------
+
+      function Get (This : Any; Pos : Any) return Any with
+        Pre => This.Kind in Composite_Kinds
+        and then Pos.Kind in Scalar_Kinds | Vec_Kind;
+      --  Note this always returns a copy; for in place modification use Ref
+
+      ---------------
+      --  Vectors  --
+      ---------------
+
+      function Head (This : Any) return Any with
+        Pre => This.Kind = Vec_Kind and then not This.Is_Empty;
+      --  Taking the head of an empty vector is an error
+
+      function Tail (This : Any) return Any with
+        Pre => This.Kind = Vec_Kind and then not This.Is_Empty,
+        Post => Tail'Result.Length = This.Length - 1;
+      --  Taking the tail of an empty vector is an error
+
    end References;
 
 private
@@ -235,6 +262,12 @@ private
       Vec : Any;
    end record;
 
+   function Kind_If_Valid (This : Any) return String with
+     Post => Kind_If_Valid'Result = "(invalid)" or else
+     (for some Kind in Kinds =>
+        Kind'Image = Kind_If_Valid'Result);
+   --  Used for exception info
+
    --  These could go in the body if not because of
    --  https://forum.ada-lang.io/t/bug-or-legit-instantiation-in-body-of-
    --  preelaborable-generic-complains-about-non-static-constant/1742
@@ -243,10 +276,10 @@ private
      new Ada.Containers.Indefinite_Ordered_Maps (Any'Class, Any'Class,
                                                  "<" => Precedes);
 
-   subtype Long_Long_Positive is
-     Long_Long_Integer range 1 .. Long_Long_Integer'Last;
+   subtype Universal_Positive is
+     Universal_Integer range 1 .. Universal_Integer'Last;
 
    package Any_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Long_Long_Positive, Any'Class);
+     new Ada.Containers.Indefinite_Vectors (Universal_Positive, Any'Class);
 
 end Yeison_Generic;
