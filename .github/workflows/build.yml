@@ -8,12 +8,6 @@ on:
         required: true
         type: string
 
-env:
-  AAA_STYLE_CHECKS: enabled
-  AAA_RUNTIME_CHECKS: enabled
-  AAA_COMPILE_CHECKS: enabled
-  AAA_CONTRACTS: enabled
-
 jobs:
   crate:
     strategy:
