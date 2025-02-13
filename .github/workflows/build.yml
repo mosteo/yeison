@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      crate:
+        description: 'The crate to build'
+        required: true
+        type: string
+
+env:
+  AAA_STYLE_CHECKS: enabled
+  AAA_RUNTIME_CHECKS: enabled
+  AAA_COMPILE_CHECKS: enabled
+  AAA_CONTRACTS: enabled
+
+jobs:
+  crate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        gnat_version: [10, 11, 12, 13, 14]
+        exclude:
+          # Some combos are not supported due to missing pieces in the toolchain
+          # No builds of gcc-10, -11, -12 that work on arm64
+          - os: macos-latest
+            gnat_version: 10
+          - os: macos-latest
+            gnat_version: 11
+          - os: macos-latest
+            gnat_version: 12
+          # gcc-10 and -11 do not work on LTS 24.04 anymore
+          - os: ubuntu-latest
+            gnat_version: 10
+          - os: ubuntu-latest
+            gnat_version: 11
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Alire and toolchain
+      uses: alire-project/setup-alire@v4
+      with:
+        toolchain: gnat_native^${{ matrix.gnat_version }} gprbuild
+
+    - name: Build
+      run: cd ${{inputs.crate}} && alr -q build
+
+    - name: Run tests
+      run: cd ${{inputs.crate}}/test && alr -q run

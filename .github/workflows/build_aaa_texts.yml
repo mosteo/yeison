@@ -1,0 +1,13 @@
+name: aaa_texts
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    uses: ./.github/workflows/build.yml
+    with:
+      crate: aaa_texts
