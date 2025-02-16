@@ -294,6 +294,7 @@ package body Yeison_Generic is
       use Ada.Strings.Wide_Wide_Unbounded;
       function "+" (S : Wide_Wide_String) return WWUString
                     renames To_Unbounded_Wide_Wide_String;
+      pragma Unreferenced ("+");
 
       ------------------
       -- Scalar_Image --
@@ -395,8 +396,8 @@ package body Yeison_Generic is
                  (case Format is
                      when Ada_Like => "   ",
                      when JSON     => "  ");
-         function WS (Str : Text) return Text
-         is (1 .. Str'Length => ' ');
+         --  function WS (Str : Text) return Text -- Whitespace of same length
+         --  is (1 .. Str'Length => ' ');
       begin
          case This.Kind is
             when Scalar_Kinds =>
@@ -431,10 +432,13 @@ package body Yeison_Generic is
                      --  we are using an object for indexing.
 
                      Traverse (This.Impl.Map.Constant_Reference (C),
-                               WS (Prefix & Tab
-                                 & Key (C).Image (Format, Compact)
-                                 & Map_Arrow),
+                               Prefix & Tab,
                                Contd => True);
+
+                     if Has_Element (Next (C)) then
+                        Append (Result, ",");
+                     end if;
+
                      if not Abbr then
                         Append (Result, NL);
                      end if;
@@ -475,7 +479,7 @@ package body Yeison_Generic is
                              & (if Abbr then " " else NL));
                   end loop;
                   Append (Result,
-                          (if Abbr then " " else Prefix)
+                          (if Abbr then "" else Prefix)
                           & Vec_Close);
                end;
          end case;
@@ -483,7 +487,7 @@ package body Yeison_Generic is
 
    begin
       if not This.Is_Valid then
-         Result := +"(invalid)";
+         raise Constraint_Error with "Cannot generate image of invalid value";
       else
          Traverse (This, "");
       end if;
