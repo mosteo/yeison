@@ -1,6 +1,7 @@
 pragma Ada_2012;
 
 with Yeison_Generic;
+with Yeison_Utils;
 
 package Yeison_12 with Preelaborate is
 
@@ -10,15 +11,24 @@ package Yeison_12 with Preelaborate is
 
    subtype Big_Real is Long_Long_Float;
 
+   package Reals is new Yeison_Utils.General_Reals (Big_Real,
+                                                    "<",
+                                                    Big_Real'Wide_Wide_Image);
+
    package Impl is
      new Yeison_Generic (Big_Int, Identity, Big_Int'Wide_Wide_Image,
-                         Big_Real, Big_Real'Wide_Wide_Image);
+                         Reals.General_Real, Reals.Image,
+                         "<", Reals."<");
 
    type Any is new Impl.Any with null record with
      --  Constant_Indexing => Const_Ref,
      Variable_Indexing => Reference;
    --  Enabling constant indexing limits how we can use indexing in transient
    --  expressions. Not sure this is entirely a good idea...
+
+   subtype Scalar is Impl.Scalar;
+
+   package Scalars renames Impl.Scalars;
 
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;

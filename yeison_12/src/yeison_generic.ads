@@ -14,8 +14,10 @@ generic
    type Int_Type is private; -- not range <> to allow Big_Integer
    with function To_Integer (I : Int_Type) return Long_Long_Integer;
    with function Image (I : Int_Type) return Wide_Wide_String is <>;
+
    type Real_Type is private; -- same about digits <>
    with function Image (R : Real_Type) return Wide_Wide_String is <>;
+
    with function "<" (L, R : Int_Type) return Boolean is <>;
    with function "<" (L, R : Real_Type) return Boolean is <>;
 package Yeison_Generic with Preelaborate is
@@ -70,15 +72,37 @@ package Yeison_Generic with Preelaborate is
    --  Scalars  --
    ---------------
 
-   function True return Any;
+   --  Separate type to ease initializations elsewhere
 
-   function False return Any;
+   type Scalar (<>) is tagged private;
 
-   function As_Bool (This : Any) return Boolean;
+   function Kind (This : Scalar) return Scalar_Kinds;
 
-   function As_Int (This : Any) return Long_Long_Integer;
+   function As_Boolean (This : Scalar) return Boolean;
+   function As_Integer (This : Scalar) return Int_Type;
+   function As_Real (This : Scalar) return Real_Type;
+   function As_Text (This : Scalar) return Text;
 
-   function As_Text (This : Any) return Text;
+   --  See package Scalars below for initializations
+
+   --  Retrieval
+
+   function As_Scalar (This : Any'Class) return Scalar
+     with Pre => This.Kind in Scalar_Kinds;
+
+   function As_Bool (This : Any) return Boolean
+     with Pre => This.Kind = Bool_Kind;
+
+   function As_Int (This : Any) return Int_Type
+     with Pre => This.Kind = Int_Kind;
+
+   function As_Real (This : Any) return Real_Type
+     with Pre => This.Kind = Real_Kind;
+
+   function As_Text (This : Any) return Text
+     with Pre => This.Kind = Str_Kind;
+
+   --  See package Make below for initializations
 
    -------------------
    --  Collections  --
@@ -135,6 +159,19 @@ package Yeison_Generic with Preelaborate is
 
    function Empty_Vec return Any;
 
+   -------------
+   -- Scalars --
+   -------------
+
+   package Scalars is
+
+      function New_Bool (Val : Boolean)   return Scalar;
+      function New_Int  (Val : Int_Type)  return Scalar;
+      function New_Real (Val : Real_Type) return Scalar;
+      function New_Text (Val : Text)      return Scalar;
+
+   end Scalars;
+
    ---------------
    -- Operators --
    ---------------
@@ -166,9 +203,15 @@ package Yeison_Generic with Preelaborate is
       ----------
 
       package Make is
-         function Int (This : Int_Type) return Client_Any;
+         function True  return Client_Any;
+         function False return Client_Any;
+
+         function Bool (This : Boolean)   return Client_Any;
+         function Int  (This : Int_Type)  return Client_Any;
          function Real (This : Real_Type) return Client_Any;
-         function Str (This : Text) return Client_Any;
+         function Str  (This : Text)      return Client_Any;
+
+         function Scalar (This : Yeison_Generic.Scalar) return Client_Any;
       end Make;
 
    end Operators;
@@ -281,5 +324,26 @@ private
 
    package Any_Vectors is
      new Ada.Containers.Indefinite_Vectors (Universal_Positive, Any'Class);
+
+   ---------------
+   --  Scalars  --
+   ---------------
+
+   type Scalar_Data (Kind : Scalar_Kinds := Bool_Kind) is record
+      case Kind is
+         when Bool_Kind =>
+            Bool : Boolean;
+         when Int_Kind =>
+            Int : Int_Type;
+         when Real_Kind =>
+            Real : Real_Type;
+         when Str_Kind =>
+            Str  : WWUString;
+      end case;
+   end record;
+
+   type Scalar is tagged record
+      Data : Scalar_Data;
+   end record;
 
 end Yeison_Generic;
