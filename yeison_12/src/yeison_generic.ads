@@ -53,9 +53,14 @@ package Yeison_Generic with Preelaborate is
 
    type Image_Formats is (Ada_Like, JSON);
 
+   type Image_Options is record
+      Compact      : Boolean := False;
+      Ordered_Keys : Boolean := False;
+   end record;
+
    function Image (This    : Any'Class;
                    Format  : Image_Formats := Ada_Like;
-                   Compact : Boolean := False)
+                   Options : Image_Options := (others => <>))
                    return Text;
 
    function Invalid return Any;
@@ -144,8 +149,9 @@ package Yeison_Generic with Preelaborate is
                     Replace : Boolean := False)
                     return Any;
 
-   function Keys (This : Any) return Any_Array with
+   function Keys (This : Any; Ordered : Boolean := False) return Any_Array with
      Pre => This.Kind = Map_Kind;
+   --  Keys, in either the original addition order, or in alphabetical order.
    --  This is a chapuza until we have proper iteration over Any values. Note
    --  that in the versioned clients, Any is of a different derived type!
    --  That's why this doesn't have much future...
@@ -322,7 +328,7 @@ private
    subtype Universal_Positive is
      Universal_Integer range 1 .. Universal_Integer'Last;
 
-   package Any_Vectors is
+   package Any_Vecs is
      new Ada.Containers.Indefinite_Vectors (Universal_Positive, Any'Class);
 
    ---------------

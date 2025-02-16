@@ -14,6 +14,7 @@ package body Yeison_Generic is
 
    package Fixed renames Ada.Strings.Wide_Wide_Fixed;
 
+   use type Ada.Containers.Count_Type;
    use all type Ada.Strings.Trim_End;
 
    pragma Warnings (Off);
@@ -31,16 +32,15 @@ package body Yeison_Generic is
          when Scalar_Kinds =>
             Val : Scalar_Data (Kind);
          when Map_Kind =>
-            Map : Any_Maps.Map;
+            Map  : Any_Maps.Map;
+            Keys : Any_Vecs.Vector;
+            --  Keys, in the order in which they were added
          when Vec_Kind =>
-            Vec : Any_Vectors.Vector;
+            Vec : Any_Vecs.Vector;
       end case;
    end record
-     --  with Dynamic_Predicate =>
-     --    (if Any_Impl.Kind = Map_Kind then
-     --       (for all E of Any_Impl.Map =>
-     --              External_Tag (E'Tag) /= "YEISON_12.IMPL.ANY"));
-     ;
+     with Dynamic_Predicate =>
+       (if Any_Impl.Kind = Map_Kind then Map.Length = Keys.Length);
 
    function Kind (This : Scalar) return Scalar_Kinds is (This.Data.Kind);
 
@@ -288,7 +288,7 @@ package body Yeison_Generic is
 
    function Image (This    : Any'Class;
                    Format  : Image_Formats := Ada_Like;
-                   Compact : Boolean := False)
+                   Options : Image_Options := (others => <>))
                    return Text
    is
       use Ada.Strings.Wide_Wide_Unbounded;
@@ -407,10 +407,12 @@ package body Yeison_Generic is
 
             when Map_Kind =>
                declare
-                  C    : Any_Maps.Cursor := This.Impl.Map.First;
+                  C_Map : Any_Maps.Cursor := This.Impl.Map.First;
+                  C_Vec : Any_Vecs.Cursor := This.Impl.Keys.First;
                   use Any_Maps;
+                  use Any_Vecs;
                   Abbr : constant Boolean :=
-                           Compact and then This.Impl.Map.Length in 1;
+                           Options.Compact and then This.Impl.Map.Length in 1;
                begin
                   if This.Impl.Map.Is_Empty then
                      Append (Result,
@@ -423,26 +425,45 @@ package body Yeison_Generic is
                           & Map_Open
                           & (if Abbr then " " else NL));
 
-                  while Has_Element (C) loop
+                  while (if Options.Ordered_Keys
+                         then Any_Maps.Has_Element (C_Map)
+                         else Any_Vecs.Has_Element (C_Vec))
+                  loop
                      Append (Result,
                              (if Abbr then " " else Prefix & Tab)
-                             & Key (C).Image (Format, Compact)
+                             & (if Options.Ordered_Keys
+                                then Any_Maps.Key (C_Map)
+                                             .Image (Format, Options)
+                                else Any_Vecs.Element (C_Vec)
+                                             .Image (Format, Options))
                              & Map_Arrow);
                      --  TODO: the above key image should be prefixed in case
                      --  we are using an object for indexing.
 
-                     Traverse (This.Impl.Map.Constant_Reference (C),
+                     Traverse ((if Options.Ordered_Keys
+                               then This.Impl.Map.Constant_Reference (C_Map)
+                               else This.Impl.Map.Constant_Reference
+                                 (This.Impl.Map.Find
+                                    (Any_Vecs.Element (C_Vec)))),
                                Prefix & Tab,
                                Contd => True);
 
-                     if Has_Element (Next (C)) then
+                     if (if Options.Ordered_Keys
+                         then Any_Maps.Has_Element (Next (C_Map))
+                         else Any_Vecs.Has_Element (Next (C_Vec)))
+                     then
                         Append (Result, ",");
                      end if;
 
                      if not Abbr then
                         Append (Result, NL);
                      end if;
-                     C := Next (C);
+
+                     if Options.Ordered_Keys then
+                        Next (C_Map);
+                     else
+                        Next (C_Vec);
+                     end if;
                   end loop;
 
                   Append (Result,
@@ -452,7 +473,7 @@ package body Yeison_Generic is
             when Vec_Kind =>
                declare
                   Abbr : constant Boolean :=
-                           Compact and then This.Impl.Vec.Length in 1;
+                           Options.Compact and then This.Impl.Vec.Length in 1;
                   I    : Natural := 0;
                begin
                   if This.Impl.Vec.Is_Empty then
@@ -492,10 +513,7 @@ package body Yeison_Generic is
          Traverse (This, "");
       end if;
 
-      return To_Wide_Wide_String
-        (
-         --  Wide_Wide_Expanded_Name (This'Tag) & ": " &
-         Result);
+      return To_Wide_Wide_String (Result);
    end Image;
 
    -------------
@@ -528,18 +546,21 @@ package body Yeison_Generic is
    -- Keys --
    ----------
 
-   function Keys (This : Any) return Any_Array is
+   function Keys (This : Any; Ordered : Boolean := False) return Any_Array is
       Result : Any_Array (1 .. Integer (This.Impl.Map.Length));
       Pos    : Positive := 1;
    begin
-      for I in This.Impl.Map.Iterate loop
-         declare
-            Key : constant Any'Class := Any_Maps.Key (I);
-         begin
+      if Ordered then
+         for I in This.Impl.Map.Iterate loop
+            Result (Pos) := Any (Any_Maps.Key (I));
+            Pos := Pos + 1;
+         end loop;
+      else
+         for Key of This.Impl.Keys loop
             Result (Pos) := Any (Key);
-         end;
-         Pos := Pos + 1;
-      end loop;
+            Pos := Pos + 1;
+         end loop;
+      end if;
 
       return Result;
    end Keys;
@@ -628,6 +649,7 @@ package body Yeison_Generic is
    is
    begin
       This.Impl.Map.Insert (Key, Value);
+      This.Impl.Keys.Append (Key);
    end Insert;
 
    ------------
