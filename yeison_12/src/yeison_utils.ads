@@ -8,6 +8,15 @@ package Yeison_Utils with Preelaborate is
    --  Prepare a string for storage in JSON format. Does not add enclosing
    --  quotes!
 
+   function YAML_Double_Quote_Escape (Str : Text) return Text;
+   --  Escapes for YAML output in a doubly-quoted string: "example". The string
+   --  is quoted even when no escaping is necessary, to avoid confusing cases
+   --  like printable strings starting/ending on YAML control characters.
+
+   -------------------
+   -- General_Reals --
+   -------------------
+
    --  JSON doesn't support directly representing non-finite reals, but TOML
    --  and YAML do.
 
