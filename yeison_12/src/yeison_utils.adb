@@ -5,6 +5,24 @@ with Interfaces;
 
 package body Yeison_Utils is
 
+   function Nicer_Real_Image (Img : Text) return Text is
+      Last : Natural := Img'Last;
+   begin
+      if Img'Length > 4 and then Img (Last - 3 .. Last) = "E+00" then
+         Last := Last - 4;
+
+         --  Remove zeroes at the end, but keep one after the '.'
+
+         while Img (Last) = '0' and then
+               Last - 1 in Img'Range and then Img (Last - 1) /= '.'
+         loop
+            Last := Last - 1;
+         end loop;
+      end if;
+
+      return Img (Img'First .. Last);
+   end Nicer_Real_Image;
+
    ------------------------
    -- Escape_Unprintable --
    ------------------------

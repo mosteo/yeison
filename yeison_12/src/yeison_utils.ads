@@ -13,6 +13,10 @@ package Yeison_Utils with Preelaborate is
    --  is quoted even when no escaping is necessary, to avoid confusing cases
    --  like printable strings starting/ending on YAML control characters.
 
+   function Nicer_Real_Image (Img : Text) return Text;
+   --  Remove exponential notation when trivially feasible, e.g.:
+   --  2.00000000000000E+00 --> 2.0
+
    -------------------
    -- General_Reals --
    -------------------

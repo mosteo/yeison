@@ -11,9 +11,12 @@ package Yeison_12 with Preelaborate is
 
    subtype Big_Real is Long_Long_Float;
 
+   function Nicer_Image (R : Big_Real) return Wide_Wide_String;
+   --  Avoid scientific notation when easy to do so
+
    package Reals is new Yeison_Utils.General_Reals (Big_Real,
                                                     "<",
-                                                    Big_Real'Wide_Wide_Image);
+                                                    Nicer_Image);
 
    package Impl is
      new Yeison_Generic (Big_Int, Identity, Big_Int'Wide_Wide_Image,
@@ -102,5 +105,12 @@ package Yeison_12 with Preelaborate is
 private
 
    Unimplemented : exception;
+
+   -----------------
+   -- Nicer_Image --
+   -----------------
+
+   function Nicer_Image (R : Big_Real) return Wide_Wide_String
+   is (Yeison_Utils.Nicer_Real_Image (R'Wide_Wide_Image));
 
 end Yeison_12;
