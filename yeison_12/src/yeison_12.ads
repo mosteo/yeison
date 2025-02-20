@@ -35,7 +35,8 @@ package Yeison_12 with Preelaborate is
 
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
-   subtype Map  is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
+   --  subtype Map  is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
+   --  Triggers bug in GNAT 10
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str  is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
    subtype Vec  is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;

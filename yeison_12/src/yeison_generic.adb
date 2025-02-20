@@ -129,13 +129,18 @@ package body Yeison_Generic is
          ------------
 
          function Scalar (This : Yeison_Generic.Scalar) return Client_Any
-         is (To_Any ((Any_Parent with Impl => new Any_Impl'
-                        (case This.Data.Kind is
-                            when Bool_Kind => (Bool_Kind, This.Data),
-                            when Int_Kind  => (Int_Kind, This.Data),
-                            when Real_Kind => (Real_Kind, This.Data),
-                            when Str_Kind  => (Str_Kind, This.Data)
-                        ))));
+         is
+            --  Workaround for bugbox in GNAT 11
+            Pre : constant Any :=
+                    (Any_Parent with Impl => new Any_Impl'
+                       (case This.Data.Kind is
+                           when Bool_Kind => (Bool_Kind, This.Data),
+                           when Int_Kind  => (Int_Kind, This.Data),
+                           when Real_Kind => (Real_Kind, This.Data),
+                           when Str_Kind  => (Str_Kind, This.Data)));
+         begin
+            return To_Any (Pre);
+         end Scalar;
 
          -----------
          -- False --

@@ -33,8 +33,11 @@ jobs:
       with:
         toolchain: gnat_native^${{ matrix.gnat_version }} gprbuild
 
+    - name: Show GNAT version
+      run: cd ${{inputs.crate}} && alr exec -- gnat --version
+
     - name: Build
-      run: cd ${{inputs.crate}} && alr -q build
+      run: cd ${{inputs.crate}} && alr build
 
     - name: Run tests
-      run: cd ${{inputs.crate}}/test && alr -q run
+      run: cd ${{inputs.crate}}/test && alr run

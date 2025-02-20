@@ -1,0 +1,37 @@
+name: Build (GNAT 10, 11)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  crate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        gnat_version: [10, 11]
+        # Pre -12 don't support Ada 2022, so we only test Yeison_12
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Alire and toolchain
+      uses: alire-project/setup-alire@v4
+      with:
+        toolchain: gnat_native^${{ matrix.gnat_version }} gprbuild
+
+    - name: Show GNAT version
+      run: cd yeison_12 && alr exec -- gnat --version
+
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+
+    - name: Build
+      run: cd yeison_12 && alr build
+
+    - name: Run tests
+      run: cd yeison_12/test && alr run
