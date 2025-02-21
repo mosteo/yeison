@@ -24,19 +24,27 @@ package Yeison_Generic with Preelaborate is
 
    subtype Universal_Integer is Long_Long_Integer;
 
-   --  This should be Preelaborate but a suspicious errors in the body
-   --  precludes it for now. TODO: To be investigated.
+   type Kinds is (Nil_Kind,
+                  --  Uninitialized or explicitly null value
 
-   type Kinds is (Bool_Kind,
+                  Bool_Kind,
                   Int_Kind,
                   Real_Kind,
                   Str_Kind,
-                  Map_Kind,
-                  Vec_Kind);
+                  --  Scalar kinds; a single value
 
-   subtype Scalar_Kinds is Kinds range Kinds'First .. Kinds'Pred (Map_Kind);
+                  Map_Kind,
+                  Vec_Kind
+                  --  Composite kinds; a collection of elements
+                 );
+
+   subtype Scalar_Kinds
+     is Kinds range Kinds'Succ (Nil_Kind) .. Kinds'Pred (Map_Kind);
 
    subtype Composite_Kinds is Kinds range Map_Kind .. Kinds'Last;
+
+   subtype Nonscalar_Kinds is Kinds with
+     Static_Predicate => Nonscalar_Kinds in Nil_Kind | Composite_Kinds;
 
    subtype Text is Wide_Wide_String;
 
@@ -63,15 +71,18 @@ package Yeison_Generic with Preelaborate is
                    Options : Image_Options := (others => <>))
                    return Text;
 
-   function Invalid return Any;
-   --  An uninitialized Any; using it as the RHS of assignments will fail
+   function Has_Value (This : Any) return Boolean with
+     Post => Has_Value'Result = (This.Kind /= Nil_Kind);
 
-   function Is_Valid (This : Any) return Boolean;
-
-   function Kind (This : Any) return Kinds with
-     Pre => This.Is_Valid;
+   function Kind (This : Any) return Kinds;
 
    type Any_Array is array (Positive range <>) of Any;
+
+   -----------
+   --  Nil  --
+   -----------
+
+   function Is_Nil (This : Any) return Boolean is (This.Kind = Nil_Kind);
 
    ---------------
    --  Scalars  --
@@ -254,8 +265,10 @@ private
    --  also to control assignments via Controlled (when assigning through
    --  indexing).
 
+   function Nil_Impl return Any_Impl_Ptr;
+
    type Any is new Ada.Finalization.Controlled with record
-      Impl : Any_Impl_Ptr;
+      Impl : Any_Impl_Ptr := Nil_Impl;
    end record;
 
    function "<" (L, R : Any) return Boolean;
@@ -269,12 +282,6 @@ private
    type Vec is record
       Vec : Any;
    end record;
-
-   function Kind_If_Valid (This : Any) return String with
-     Post => Kind_If_Valid'Result = "(invalid)" or else
-     (for some Kind in Kinds =>
-        Kind'Image = Kind_If_Valid'Result);
-   --  Used for exception info
 
    --  These could go in the body if not because of
    --  https://forum.ada-lang.io/t/bug-or-legit-instantiation-in-body-of-
@@ -313,6 +320,7 @@ private
 
    --  For the benefit of the child Operators
 
+   function New_Nil return Any'Class;
    function New_Bool (Val : Boolean)   return Any'Class;
    function New_Int  (Val : Int_Type)  return Any'Class;
    function New_Real (Val : Real_Type) return Any'Class;

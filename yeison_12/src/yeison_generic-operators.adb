@@ -31,6 +31,13 @@ package body Yeison_Generic.Operators is
 
    package body Make is
 
+      ---------
+      -- Nil --
+      ---------
+
+      function Nil return Client_Any
+      is (To_Any (Any (New_Nil)));
+
       ------------
       -- Scalar --
       ------------

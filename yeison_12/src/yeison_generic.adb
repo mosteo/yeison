@@ -29,18 +29,29 @@ package body Yeison_Generic is
 
    type Any_Impl (Kind : Kinds := Bool_Kind) is record
       case Kind is
+         when Nil_Kind => null;
+
          when Scalar_Kinds =>
             Val : Scalar_Data (Kind);
+
          when Map_Kind =>
             Map  : Any_Maps.Map;
             Keys : Any_Vecs.Vector;
             --  Keys, in the order in which they were added
+
          when Vec_Kind =>
             Vec : Any_Vecs.Vector;
       end case;
    end record
      with Dynamic_Predicate =>
        (if Any_Impl.Kind = Map_Kind then Map.Length = Keys.Length);
+
+   --------------
+   -- Nil_Impl --
+   --------------
+
+   function Nil_Impl return Any_Impl_Ptr
+   is (new Any_Impl'(Kind => Nil_Kind));
 
    function Kind (This : Scalar) return Scalar_Kinds is (This.Data.Kind);
 
@@ -49,6 +60,9 @@ package body Yeison_Generic is
    function As_Real (This : Scalar) return Real_Type is (This.Data.Real);
    function As_Text (This : Scalar) return Text
    is (WWUStrings.To_Wide_Wide_String (This.Data.Str));
+
+   function New_Nil return Any'Class
+   is (Any'(Any_Parent with Impl => Nil_Impl));
 
    function New_Bool (Val : Boolean)   return Any'Class
    is (Any'(Any_Parent with Impl =>
@@ -122,6 +136,7 @@ package body Yeison_Generic is
       --  Both the same
 
       case L.Kind is
+         when Nil_Kind => return False;
          when Bool_Kind => return L.Val.Bool < R.Val.Bool;
          when Int_Kind  => return L.Val.Int < R.Val.Int;
          when Real_Kind => return L.Val.Real < R.Val.Real;
@@ -224,7 +239,7 @@ package body Yeison_Generic is
                       To_Wide_Wide_String (This.Impl.Val.Str),
                    when JSON     =>
                       JSON_Quote (To_Wide_Wide_String (This.Impl.Val.Str))),
-             when Composite_Kinds =>
+             when Nonscalar_Kinds =>
                 raise Program_Error with "not a scalar: " & This.Kind'Image
          );
 
@@ -310,6 +325,9 @@ package body Yeison_Generic is
          --  is (1 .. Str'Length => ' ');
       begin
          case This.Kind is
+            when Nil_Kind =>
+               Append (Result, (if Contd then Text'("") else Prefix) & "null");
+
             when Scalar_Kinds =>
                Append (Result,
                        (if Contd then Text'("") else Prefix)
@@ -417,11 +435,7 @@ package body Yeison_Generic is
       end Traverse;
 
    begin
-      if not This.Is_Valid then
-         raise Constraint_Error with "Cannot generate image of invalid value";
-      else
-         Traverse (This, "");
-      end if;
+      Traverse (This, "");
 
       return To_Wide_Wide_String (Result);
    end Image;
@@ -443,13 +457,13 @@ package body Yeison_Generic is
           when Vec_Kind => This.Impl.Vec.Is_Empty,
           when others   =>
              raise Constraint_Error
-               with "not a collection: " & This.Kind_If_Valid);
+               with "not a collection: " & This.Kind'Image);
 
-   --------------
-   -- Is_Valid --
-   --------------
+   ---------------
+   -- Has_Value --
+   ---------------
 
-   function Is_Valid (This : Any) return Boolean
+   function Has_Value (This : Any) return Boolean
    is (This.Impl /= null);
 
    ----------
@@ -482,15 +496,6 @@ package body Yeison_Generic is
    function Kind (This : Any) return Kinds
    is (This.Impl.Kind);
 
-   -------------------
-   -- Kind_If_Valid --
-   -------------------
-
-   function Kind_If_Valid (This : Any) return String
-   is (if This.Is_Valid
-       then This.Kind'Image
-       else "(invalid)");
-
    ------------
    -- Length --
    ------------
@@ -501,7 +506,7 @@ package body Yeison_Generic is
           when Vec_Kind => Universal_Integer (This.Impl.Vec.Length),
           when others   =>
              raise Constraint_Error
-               with "not a collection: " & This.Kind_If_Valid);
+               with "not a collection: " & This.Kind'Image);
 
    ---------
    -- "<" --
@@ -509,16 +514,6 @@ package body Yeison_Generic is
 
    function "<" (L, R : Any) return Boolean is
    begin
-      if not L.Is_Valid and then R.Is_Valid then
-         return True;
-      elsif not R.Is_Valid and then L.Is_Valid then
-         return False;
-      elsif not L.Is_Valid and then not R.Is_Valid then
-         return False;
-      end if;
-
-      --  Both valid
-
       if L.Kind < R.Kind then
          return True;
       elsif R.Kind < L.Kind then
@@ -534,9 +529,7 @@ package body Yeison_Generic is
 
    overriding procedure Adjust (This : in out Any) is
    begin
-      if This.Is_Valid then
-         This.Impl := new Any_Impl'(This.Impl.all);
-      end if;
+      This.Impl := new Any_Impl'(This.Impl.all);
    end Adjust;
 
    ------------
@@ -673,7 +666,7 @@ package body Yeison_Generic is
 
             --  Initialize empty vec/map if needed
 
-            if not This.Is_Valid then
+            if This.Is_Nil then
                case Pos.Kind is
                   when Int_Kind =>
                      Self (This).all := To_Any (Empty_Vec);
@@ -727,6 +720,10 @@ package body Yeison_Generic is
 
       begin
          case Pos.Kind is
+            when Nil_Kind =>
+               Constraint_Error ("with null index", Pos);
+               return null;
+
             when Map_Kind =>
                Constraint_Error ("with a map", Pos);
                return null;

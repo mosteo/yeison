@@ -29,6 +29,8 @@ package Yeison_Generic.Operators with Preelaborate is
    ----------
 
    package Make is
+      function Nil return Client_Any;
+
       function True  return Client_Any;
       function False return Client_Any;
 
