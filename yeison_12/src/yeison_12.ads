@@ -1,6 +1,6 @@
 pragma Ada_2012;
 
-with Yeison_Generic;
+with Yeison_Generic.Operators;
 with Yeison_Utils;
 
 package Yeison_12 with Preelaborate is
@@ -52,6 +52,9 @@ package Yeison_12 with Preelaborate is
    use all type Kinds;
 
    subtype Text is Impl.Text;
+
+   function True return Any;
+   function False return Any;
 
    ----------------
    --  Indexing  --
@@ -106,6 +109,9 @@ package Yeison_12 with Preelaborate is
 private
 
    Unimplemented : exception;
+
+   function True return Any renames Make.True;
+   function False return Any renames Make.False;
 
    -----------------
    -- Nicer_Image --

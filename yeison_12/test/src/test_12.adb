@@ -40,7 +40,7 @@ begin
 
    --  Bool scalars
 
-   Report ("literal bool", True);
+   Report ("literal bool", Make.True);
 
    --  Int scalars
 

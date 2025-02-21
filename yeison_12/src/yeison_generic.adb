@@ -50,6 +50,22 @@ package body Yeison_Generic is
    function As_Text (This : Scalar) return Text
    is (WWUStrings.To_Wide_Wide_String (This.Data.Str));
 
+   function New_Bool (Val : Boolean)   return Any'Class
+   is (Any'(Any_Parent with Impl =>
+               new Any_Impl'(Bool_Kind, (Bool_Kind, Val))));
+
+   function New_Int  (Val : Int_Type)  return Any'Class
+   is (Any'(Any_Parent with Impl =>
+               new Any_Impl'(Int_Kind, (Int_Kind, Val))));
+
+   function New_Real (Val : Real_Type) return Any'Class
+   is (Any'(Any_Parent with Impl =>
+               new Any_Impl'(Real_Kind, (Real_Kind, Val))));
+
+   function New_Text (Val : Text)      return Any'Class
+   is (Any'(Any_Parent with Impl =>
+               new Any_Impl'(Str_Kind, (Str_Kind, U (Val)))));
+
    -------------
    -- Scalars --
    -------------
@@ -89,117 +105,6 @@ package body Yeison_Generic is
                    Str  => U (Val)));
 
    end Scalars;
-
-   ---------------
-   -- Operators --
-   ---------------
-
-   package body Operators is
-
-      ---------
-      -- "/" --
-      ---------
-
-      function "/" (L, R : Client_Any) return Client_Any is
-      begin
-         if L.Kind in Scalar_Kinds then
-            return Result : Client_Any := Empty_Vec do
-               Result.Append (L);
-               Result.Append (R);
-            end return;
-         elsif L.Kind in Vec_Kind then
-            return Result : Client_Any := L do
-               Result.Append (R);
-            end return;
-         else
-            raise Constraint_Error with
-              "Cannot append using ""/"" when left operator is: "
-              & L.Kind'Image;
-         end if;
-      end "/";
-
-      ----------
-      -- Make --
-      ----------
-
-      package body Make is
-
-         ------------
-         -- Scalar --
-         ------------
-
-         function Scalar (This : Yeison_Generic.Scalar) return Client_Any
-         is
-            --  Workaround for bugbox in GNAT 11
-            Pre : constant Any :=
-                    (Any_Parent with Impl => new Any_Impl'
-                       (case This.Data.Kind is
-                           when Bool_Kind => (Bool_Kind, This.Data),
-                           when Int_Kind  => (Int_Kind, This.Data),
-                           when Real_Kind => (Real_Kind, This.Data),
-                           when Str_Kind  => (Str_Kind, This.Data)));
-         begin
-            return To_Any (Pre);
-         end Scalar;
-
-         -----------
-         -- False --
-         -----------
-
-         function False return Client_Any
-         is (Make.Scalar (Scalars.New_Bool (False)));
-
-         ----------
-         -- True --
-         ----------
-
-         function True return Client_Any
-         is (Make.Scalar (Scalars.New_Bool (True)));
-
-         ----------
-         -- Bool --
-         ----------
-
-         function Bool (This : Boolean) return Client_Any
-         is (Make.Scalar (Scalars.New_Bool (This)));
-
-         ---------
-         -- Int --
-         ---------
-
-         function Int (This : Int_Type) return Client_Any
-         is (Make.Scalar (Scalars.New_Int (This)));
-
-         ----------
-         -- Real --
-         ----------
-
-         function Real (This : Real_Type) return Client_Any
-         is (Make.Scalar (Scalars.New_Real (This)));
-
-         ---------
-         -- Str --
-         ---------
-
-         function Str (This : Wide_Wide_String) return Client_Any
-         is (Make.Scalar (Scalars.New_Text (This)));
-
-      end Make;
-
-      ---------
-      -- Vec --
-      ---------
-
-      function Vec (This : Any_Array) return Client_Any is
-      begin
-         return Result : Client_Any := Empty_Vec do
-            for Elem of This loop
-               Result.Append (Elem);
-            end loop;
-         end return;
-      end Vec;
-
-   end Operators;
 
    ---------
    -- "<" --
