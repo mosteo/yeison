@@ -86,7 +86,7 @@ package body Yeison_Generic is
 
       function New_Text (Val : Text) return Scalar
       is (Data => (Kind => Str_Kind,
-                   Str  => +Val));
+                   Str  => U (Val)));
 
    end Scalars;
 

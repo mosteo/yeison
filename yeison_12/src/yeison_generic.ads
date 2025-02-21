@@ -285,8 +285,11 @@ private
    package WWUStrings renames Ada.Strings.Wide_Wide_Unbounded;
    subtype WWUString is WWUStrings.Unbounded_Wide_Wide_String;
 
-   function "+" (S : Wide_Wide_String) return WWUString renames
+   function U (S : Wide_Wide_String) return WWUString renames
      Ada.Strings.Wide_Wide_Unbounded.To_Unbounded_Wide_Wide_String;
+
+   function S (U : WWUString) return Text renames
+     Ada.Strings.Wide_Wide_Unbounded.To_Wide_Wide_String;
 
    type Any_Impl;
 
