@@ -1,4 +1,4 @@
-name: Build (GNAT 10, 11)
+name: Build (old GNATs)
 
 on:
   pull_request:
@@ -9,7 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: 
+          - windows-latest
+          - ubuntu-22.04   # Later Ubuntu no longer work with GNAT<=11
         gnat_version: [10, 11]
         # Pre -12 don't support Ada 2022, so we only test Yeison_12
 
@@ -27,8 +29,8 @@ jobs:
     - name: Show GNAT version
       run: cd yeison_12 && alr exec -- gnat --version
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
 
     - name: Build
       run: cd yeison_12 && alr build
