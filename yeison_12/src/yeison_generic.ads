@@ -211,7 +211,7 @@ package Yeison_Generic with Preelaborate is
       --  complex types, which is discouraged, and this is explicitly not
       --  supported.
       --
-      --  If This is invalid, the appropriate holder value will be created (vec
+      --  If This is nil, the appropriate holder value will be created (vec
       --  or map) depending on Any.Kind being Int or something else. If you
       --  want to force either one, assign first an empty value.
 
@@ -269,7 +269,8 @@ private
 
    type Any is new Ada.Finalization.Controlled with record
       Impl : Any_Impl_Ptr := Nil_Impl;
-   end record;
+   end record with
+     Type_Invariant => Impl /= null;
 
    function "<" (L, R : Any) return Boolean;
 
@@ -320,10 +321,14 @@ private
 
    --  For the benefit of the child Operators
 
-   function New_Nil return Any'Class;
-   function New_Bool (Val : Boolean)   return Any'Class;
-   function New_Int  (Val : Int_Type)  return Any'Class;
-   function New_Real (Val : Real_Type) return Any'Class;
-   function New_Text (Val : Text)      return Any'Class;
+   package Base is
+      --  Avoid primitiveness
+
+      function New_Nil return Any;
+      function New_Bool (Val : Boolean)   return Any;
+      function New_Int  (Val : Int_Type)  return Any;
+      function New_Real (Val : Real_Type) return Any;
+      function New_Text (Val : Text)      return Any;
+   end Base;
 
 end Yeison_Generic;

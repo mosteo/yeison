@@ -61,24 +61,32 @@ package body Yeison_Generic is
    function As_Text (This : Scalar) return Text
    is (WWUStrings.To_Wide_Wide_String (This.Data.Str));
 
-   function New_Nil return Any'Class
-   is (Any'(Any_Parent with Impl => Nil_Impl));
+   ----------
+   -- Base --
+   ----------
 
-   function New_Bool (Val : Boolean)   return Any'Class
-   is (Any'(Any_Parent with Impl =>
-               new Any_Impl'(Bool_Kind, (Bool_Kind, Val))));
+   package body Base is
 
-   function New_Int  (Val : Int_Type)  return Any'Class
-   is (Any'(Any_Parent with Impl =>
-               new Any_Impl'(Int_Kind, (Int_Kind, Val))));
+      function New_Nil return Any
+      is (Any'(Any_Parent with Impl => Nil_Impl));
 
-   function New_Real (Val : Real_Type) return Any'Class
-   is (Any'(Any_Parent with Impl =>
-               new Any_Impl'(Real_Kind, (Real_Kind, Val))));
+      function New_Bool (Val : Boolean)   return Any
+      is (Any'(Any_Parent with Impl =>
+                  new Any_Impl'(Bool_Kind, (Bool_Kind, Val))));
 
-   function New_Text (Val : Text)      return Any'Class
-   is (Any'(Any_Parent with Impl =>
-               new Any_Impl'(Str_Kind, (Str_Kind, U (Val)))));
+      function New_Int  (Val : Int_Type)  return Any
+      is (Any'(Any_Parent with Impl =>
+                  new Any_Impl'(Int_Kind, (Int_Kind, Val))));
+
+      function New_Real (Val : Real_Type) return Any
+      is (Any'(Any_Parent with Impl =>
+                  new Any_Impl'(Real_Kind, (Real_Kind, Val))));
+
+      function New_Text (Val : Text)      return Any
+      is (Any'(Any_Parent with Impl =>
+                  new Any_Impl'(Str_Kind, (Str_Kind, U (Val)))));
+
+   end Base;
 
    -------------
    -- Scalars --
@@ -440,13 +448,6 @@ package body Yeison_Generic is
       return To_Wide_Wide_String (Result);
    end Image;
 
-   -------------
-   -- Invalid --
-   -------------
-
-   function Invalid return Any
-   is (Ada.Finalization.Controlled with Impl => null);
-
    --------------
    -- Is_Empty --
    --------------
@@ -695,7 +696,7 @@ package body Yeison_Generic is
                --  end if;
 
                if not This.Impl.Map.Contains (Pos) then
-                  This.Impl.Map.Insert (Pos, To_Any (Invalid));
+                  This.Impl.Map.Insert (Pos, To_Any (Base.New_Nil));
                end if;
 
                return Self
@@ -710,7 +711,7 @@ package body Yeison_Generic is
                end if;
 
                if Univ (This.Impl.Vec.Length) < To_Integer (Pos.As_Int) then
-                  This.Impl.Vec.Append (To_Any (Invalid));
+                  This.Impl.Vec.Append (To_Any (Base.New_Nil));
                end if;
 
                return Self (This.Impl.Vec.Constant_Reference

@@ -36,7 +36,7 @@ package body Yeison_Generic.Operators is
       ---------
 
       function Nil return Client_Any
-      is (To_Any (Any (New_Nil)));
+      is (To_Any (Base.New_Nil));
 
       ------------
       -- Scalar --
@@ -46,10 +46,10 @@ package body Yeison_Generic.Operators is
       is
          Pre : constant Any'Class :=
                  (case This.Data.Kind is
-                     when Bool_Kind => New_Bool (This.Data.Bool),
-                     when Int_Kind  => New_Int  (This.Data.Int),
-                     when Real_Kind => New_Real (This.Data.Real),
-                     when Str_Kind  => New_Text (S (This.Data.Str)));
+                     when Bool_Kind => Base.New_Bool (This.Data.Bool),
+                     when Int_Kind  => Base.New_Int  (This.Data.Int),
+                     when Real_Kind => Base.New_Real (This.Data.Real),
+                     when Str_Kind  => Base.New_Text (S (This.Data.Str)));
       begin
          return To_Any (Any (Pre));
       end Scalar;
