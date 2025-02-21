@@ -465,7 +465,7 @@ package body Yeison_Generic is
    ---------------
 
    function Has_Value (This : Any) return Boolean
-   is (This.Impl /= null);
+   is (This.Kind /= Nil_Kind);
 
    ----------
    -- Keys --
