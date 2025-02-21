@@ -69,13 +69,15 @@ package Yeison with Preelaborate is
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
    subtype Map is Any with
-     Dynamic_Predicate => not Map.Is_Valid or else Map.Kind = Map_Kind;
+     Dynamic_Predicate => Map.Kind in Nil_Kind | Map_Kind;
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
    subtype Vec is Any with
-     Dynamic_Predicate => not Vec.Is_Valid or else Vec.Kind = Vec_Kind;
+     Dynamic_Predicate => Vec.Kind in Nil_Kind | Vec_Kind;
 
-   function To_Any (This : Impl.Any) return Any;
+   function Nil return Any;
+   function False return Any;
+   function True return Any;
 
    ---------------
    --  Scalars  --
@@ -139,6 +141,10 @@ package Yeison with Preelaborate is
 
    --  Cannot be instantiated here as Any must be private. Simply with and use
    --  Yeison.Operators.
+
+   function To_Any (This : Impl.Any) return Any;
+   --  This should be private but it must be publicly visible by the nested
+   --  Operators. Another spill-over of trying to reuse for 12/22 versions.
 
 private
 

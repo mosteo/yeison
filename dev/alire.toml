@@ -15,9 +15,9 @@ executables = ["dev"]
 "*" = "validation"
 
 [[depends-on]]
-yeison_12 = "~0.2.0-dev"
-yeison = "~0.2.0-dev"
+test_12 = "~0.1.0-dev"
+test    = "~0.1.0-dev"
 
 [[pins]]
-yeison_12 = { path='../yeison_12' }
-yeison = { path='../yeison_22' }
+test_12 = { path='../yeison_12/test' }
+test    = { path='../yeison_22/test' }

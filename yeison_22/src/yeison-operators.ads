@@ -1,3 +1,5 @@
+with Yeison_Generic.Operators;
+
 package Yeison.Operators with Preelaborate is
 
    package Impl is new Yeison.Impl.Operators (Any);
@@ -6,5 +8,7 @@ package Yeison.Operators with Preelaborate is
 
    function "/" (L, R : Any) return Any renames Impl."/";
    --  Vector concatenation a-la dir hierarchy
+
+   package Make renames Impl.Make;
 
 end Yeison.Operators;
