@@ -1,6 +1,6 @@
 name = "yeison_12"
 description = "A JSON-like data structure (Ada 2012 version)"
-version = "0.2.0-dev"
+version = "0.2.0"
 licenses = "MIT"
 
 authors = ["Alejandro R. Mosteo"]

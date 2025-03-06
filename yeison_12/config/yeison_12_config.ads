@@ -5,7 +5,7 @@ pragma Style_Checks (Off);
 package Yeison_12_Config is
    pragma Pure;
 
-   Crate_Version : constant String := "0.2.0-dev";
+   Crate_Version : constant String := "0.2.0";
    Crate_Name : constant String := "yeison_12";
 
    Alire_Host_OS : constant String := "linux";

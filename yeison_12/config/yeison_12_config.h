@@ -2,7 +2,7 @@
 #ifndef YEISON_12_CONFIG_H
 #define YEISON_12_CONFIG_H
 
-#define CRATE_VERSION "0.2.0-dev"
+#define CRATE_VERSION "0.2.0"
 #define CRATE_NAME "yeison_12"
 
 #define ALIRE_HOST_OS "linux"
