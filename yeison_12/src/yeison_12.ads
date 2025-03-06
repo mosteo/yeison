@@ -1,6 +1,7 @@
 pragma Ada_2012;
 
-with Yeison_Generic;
+with Yeison_Generic.Operators;
+with Yeison_Utils;
 
 package Yeison_12 with Preelaborate is
 
@@ -10,9 +11,17 @@ package Yeison_12 with Preelaborate is
 
    subtype Big_Real is Long_Long_Float;
 
+   function Nicer_Image (R : Big_Real) return Wide_Wide_String;
+   --  Avoid scientific notation when easy to do so
+
+   package Reals is new Yeison_Utils.General_Reals (Big_Real,
+                                                    "<",
+                                                    Nicer_Image);
+
    package Impl is
      new Yeison_Generic (Big_Int, Identity, Big_Int'Wide_Wide_Image,
-                         Big_Real, Big_Real'Wide_Wide_Image);
+                         Reals.General_Real, Reals.Image,
+                         "<", Reals."<");
 
    type Any is new Impl.Any with null record with
      --  Constant_Indexing => Const_Ref,
@@ -20,9 +29,14 @@ package Yeison_12 with Preelaborate is
    --  Enabling constant indexing limits how we can use indexing in transient
    --  expressions. Not sure this is entirely a good idea...
 
+   subtype Scalar is Impl.Scalar;
+
+   package Scalars renames Impl.Scalars;
+
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
-   subtype Map  is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
+   --  subtype Map  is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
+   --  Triggers bug in GNAT 10
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str  is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
    subtype Vec  is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
@@ -38,6 +52,9 @@ package Yeison_12 with Preelaborate is
    use all type Kinds;
 
    subtype Text is Impl.Text;
+
+   function True return Any;
+   function False return Any;
 
    ----------------
    --  Indexing  --
@@ -92,5 +109,15 @@ package Yeison_12 with Preelaborate is
 private
 
    Unimplemented : exception;
+
+   function True return Any renames Make.True;
+   function False return Any renames Make.False;
+
+   -----------------
+   -- Nicer_Image --
+   -----------------
+
+   function Nicer_Image (R : Big_Real) return Wide_Wide_String
+   is (Yeison_Utils.Nicer_Real_Image (R'Wide_Wide_Image));
 
 end Yeison_12;

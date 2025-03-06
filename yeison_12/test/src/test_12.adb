@@ -17,11 +17,7 @@ procedure Test_12 is
 
    procedure Report (Label : String; Value : Yeison.Any) is
    begin
-      if Value.Is_Valid then
-         Put_Line (Label & " (" & Value.Kind'Image & "):");
-      else
-         Put_Line (Label & " (INVALID):");
-      end if;
+      Put_Line (Label & " (" & Value.Kind'Image & "):");
       Put_Line (Encode (Value.Image));
       New_Line;
    end Report;
@@ -36,11 +32,11 @@ procedure Test_12 is
    end Report_RW;
 
 begin
-   Report ("empty", Invalid);
+   Report ("empty", Make.Nil);
 
    --  Bool scalars
 
-   Report ("literal bool", True);
+   Report ("literal bool", Make.True);
 
    --  Int scalars
 

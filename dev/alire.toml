@@ -1,5 +1,5 @@
-name = "test_12"
-description = "Test the library through examples"
+name = "dev"
+description = ""
 version = "0.1.0-dev"
 
 authors = ["Alejandro R. Mosteo"]
@@ -9,16 +9,15 @@ licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
 website = ""
 tags = []
 
-executables = ["test_12"]
+executables = ["dev"]
 
 [build-profiles]
 "*" = "validation"
 
-[build-switches]
-"*".ada_version = "Ada12"
-
 [[depends-on]]
-yeison_12 = "*"
+test_12 = "~0.1.0-dev"
+test    = "~0.1.0-dev"
 
 [[pins]]
-yeison_12 = { path='..' }
+test_12 = { path='../yeison_12/test' }
+test    = { path='../yeison_22/test' }

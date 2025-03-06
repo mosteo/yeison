@@ -1,3 +1,5 @@
+with Yeison_Generic.Operators;
+
 package body Yeison is
 
    ------------
@@ -10,6 +12,12 @@ package body Yeison is
    package Operators is new Impl.Operators (Any);
 
    package References is new Impl.References (Any);
+
+   package Make renames Operators.Make;
+
+   function Nil return Any renames Make.Nil;
+   function False return Any renames Make.False;
+   function True return Any renames Make.True;
 
    ------------
    -- As_Ref --
