@@ -118,6 +118,9 @@ package Yeison_Generic with Preelaborate is
    function As_Text (This : Any) return Text
      with Pre => This.Kind = Str_Kind;
 
+   function As_UTF_8 (This : Any) return String
+     with Pre => This.Kind = Str_Kind;
+
    --  See package Make below for initializations
 
    -------------------
@@ -125,7 +128,7 @@ package Yeison_Generic with Preelaborate is
    -------------------
 
    function Is_Empty (This : Any) return Boolean with
-     Pre => This.Kind in Composite_Kinds;
+     Pre => This.Is_Nil or else This.Kind in Composite_Kinds;
 
    function Length (This : Any) return Universal_Integer;
 
@@ -223,6 +226,13 @@ package Yeison_Generic with Preelaborate is
         Pre => This.Kind in Composite_Kinds
         and then Pos.Kind in Scalar_Kinds | Vec_Kind;
       --  Note this always returns a copy; for in place modification use Ref
+
+      ------------
+      --  Maps  --
+      ------------
+
+      function Has_Key (This : Any; Key : Any) return Boolean with
+        Pre => This.Kind = Map_Kind;
 
       ---------------
       --  Vectors  --

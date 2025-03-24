@@ -1,6 +1,5 @@
 with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings.Wide_Wide_Fixed;
-with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
@@ -16,14 +15,6 @@ package body Yeison_Generic is
 
    use type Ada.Containers.Count_Type;
    use all type Ada.Strings.Trim_End;
-
-   pragma Warnings (Off);
-   function Encode (T : Text; Output_BOM : Boolean  := False) return String
-                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
-
-   function Decode (T : String) return Text
-                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Decode;
-   pragma Warnings (On);
 
    subtype Any_Parent is Ada.Finalization.Controlled;
 
@@ -189,6 +180,13 @@ package body Yeison_Generic is
    function As_Text (This : Any) return Text
    is (Ada.Strings.Wide_Wide_Unbounded.To_Wide_Wide_String
        (This.Impl.Val.Str));
+
+   --------------
+   -- As_UTF_8 --
+   --------------
+
+   function As_UTF_8 (This : Any) return String
+   is (Yeison_Utils.Encode (This.As_Text));
 
    ---------------
    -- Empty_Map --
@@ -454,6 +452,7 @@ package body Yeison_Generic is
 
    function Is_Empty (This : Any) return Boolean
    is (case This.Kind is
+          when Nil_Kind => True,
           when Map_Kind => This.Impl.Map.Is_Empty,
           when Vec_Kind => This.Impl.Vec.Is_Empty,
           when others   =>
@@ -589,6 +588,13 @@ package body Yeison_Generic is
 
    package body References is
 
+      -------------
+      -- Has_Key --
+      -------------
+
+      function Has_Key (This : Any; Key : Any) return Boolean
+      is (for some C in This.Impl.Map.Iterate => Any_Maps.Key (C) = Key);
+
       ----------
       -- Head --
       ----------
@@ -651,7 +657,7 @@ package body Yeison_Generic is
          begin
             raise Standard.Constraint_Error
               with "cannot index " & Msg & " when index is "
-              & Encode (Pos.Image);
+              & Yeison_Utils.Encode (Pos.Image);
          end Constraint_Error;
 
          -------------------

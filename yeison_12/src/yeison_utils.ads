@@ -1,8 +1,16 @@
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
 package Yeison_Utils with Preelaborate is
 
    --  Miscellanea supporting code of maybe interest elsewhere
 
    subtype Text is Wide_Wide_String;
+
+   function Encode (T : Text; Output_BOM : Boolean  := False) return String
+                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
+
+   function Decode (T : String) return Text
+                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Decode;
 
    function JSON_Escape (Str : Text) return Text;
    --  Prepare a string for storage in JSON format. Does not add enclosing

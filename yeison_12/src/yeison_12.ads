@@ -52,6 +52,7 @@ package Yeison_12 with Preelaborate is
    use all type Kinds;
 
    subtype Text is Impl.Text;
+   subtype UTF_8_String is String;
 
    function True return Any;
    function False return Any;
@@ -83,6 +84,17 @@ package Yeison_12 with Preelaborate is
    --  If This is invalid, the appropriate holder value will be created (vec or
    --  map) depending on Any.Kind being Int or something else. If you want to
    --  force either one, assign first an empty value.
+
+   function Reference (This : Any; Pos : UTF_8_String) return Ref with
+     Pre => This.Kind = Map_Kind;
+   --  Convenience to directly index with a string
+
+   function Reference (This : Any; I : Integer) return Ref with
+     Pre => This.Kind = Vec_Kind;
+
+   function Has_Key (This : Any; Key : UTF_8_String) return Boolean;
+   function Has_Field (This : Any; Key : UTF_8_String) return Boolean
+                       renames Has_Key;
 
    function Self (This : aliased Any) return Ref;
 
