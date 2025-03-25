@@ -606,6 +606,19 @@ package body Yeison_Generic is
 
    package body References is
 
+      ----------
+      -- Keys --
+      ----------
+
+      function Keys (This : Any) return Any is
+      begin
+         return Result : Any do
+            for Key of This.Impl.Keys loop
+               Result.Append (To_Any (Base_Any (Key)));
+            end loop;
+         end return;
+      end Keys;
+
       -------------
       -- Has_Key --
       -------------
@@ -773,5 +786,103 @@ package body Yeison_Generic is
       end Reference;
 
    end References;
+
+   ---------------
+   -- Iterators --
+   ---------------
+
+   package body Iterators is
+
+      ------------------
+      -- First_Cursor --
+      ------------------
+
+      function First_Cursor (Container : Any) return Cursor is
+      begin
+         case Container.Kind is
+            when Map_Kind =>
+               if Container.Impl.Map.Is_Empty then
+                  return (Kind => Invalid);
+               else
+                  return (Kind         => Map_Cursor,
+                          Map_Pos      => Container.Impl.Map.First);
+               end if;
+            when Vec_Kind =>
+               if Container.Impl.Vec.Is_Empty then
+                  return (Kind => Invalid);
+               else
+                  return (Kind         => Vec_Cursor,
+                          Vec_Pos      => Container.Impl.Vec.First_Index);
+               end if;
+            when others =>
+               return (Kind => Invalid);
+         end case;
+      end First_Cursor;
+
+      -----------------
+      -- Next_Cursor --
+      -----------------
+
+      function Next_Cursor (Container : Any; Pos : Cursor) return Cursor is
+      begin
+         case Pos.Kind is
+            when Map_Cursor =>
+               declare
+                  Next_Pos : Any_Maps.Cursor := Pos.Map_Pos;
+               begin
+                  Any_Maps.Next (Next_Pos);
+                  if Any_Maps.Has_Element (Next_Pos) then
+                     return (Kind => Map_Cursor, Map_Pos => Next_Pos);
+                  else
+                     return (Kind => Invalid);
+                  end if;
+               end;
+            when Vec_Cursor =>
+               if Pos.Vec_Pos < Container.Impl.Vec.Last_Index then
+                  return (Kind         => Vec_Cursor,
+                          Vec_Pos      => Pos.Vec_Pos + 1);
+               else
+                  return (Kind => Invalid);
+               end if;
+            when Invalid =>
+               return Pos;
+         end case;
+      end Next_Cursor;
+
+      -----------------
+      -- Has_Element --
+      -----------------
+
+      function Has_Element (Container : Any; Pos : Cursor) return Boolean is
+      begin
+         case Pos.Kind is
+            when Map_Cursor =>
+               return Any_Maps.Has_Element (Pos.Map_Pos);
+            when Vec_Cursor =>
+               return Pos.Vec_Pos <= Container.Impl.Vec.Last_Index;
+            when Invalid =>
+               return False;
+         end case;
+      end Has_Element;
+
+      -------------
+      -- Element --
+      -------------
+
+      function Element (Container : Any; Pos : Cursor) return Any is
+      begin
+         case Pos.Kind is
+            when Map_Cursor =>
+               -- For maps, we return just the value part, discarding the key
+               return To_Any (Base_Any (Any_Maps.Element (Pos.Map_Pos)));
+            when Vec_Cursor =>
+               return To_Any
+                 (Base_Any (Container.Impl.Vec.Element (Pos.Vec_Pos)));
+            when Invalid =>
+               raise Constraint_Error with "Invalid cursor";
+         end case;
+      end Element;
+
+   end Iterators;
 
 end Yeison_Generic;

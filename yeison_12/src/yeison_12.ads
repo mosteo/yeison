@@ -25,7 +25,11 @@ package Yeison_12 with Preelaborate is
 
    type Any is new Impl.Any with null record with
      --  Constant_Indexing => Const_Ref,
-     Variable_Indexing => Reference;
+     Variable_Indexing => Reference,
+     Iterable => (First       => First,
+                  Next        => Next,
+                  Has_Element => Has_Element,
+                  Element     => Element);
    --  Enabling constant indexing limits how we can use indexing in transient
    --  expressions. Not sure this is entirely a good idea...
 
@@ -56,6 +60,18 @@ package Yeison_12 with Preelaborate is
 
    function True return Any;
    function False return Any;
+
+   ---------------
+   -- Iterators --
+   ---------------
+
+   function First (Container : Any) return Impl.Cursor;
+
+   function Next (Container : Any; Position : Impl.Cursor) return Impl.Cursor;
+
+   function Has_Element (Container : Any; Position : Impl.Cursor) return Boolean;
+
+   function Element (Container : Any; Position : Impl.Cursor) return Any;
 
    ----------------
    --  Indexing  --

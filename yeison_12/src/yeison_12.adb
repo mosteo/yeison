@@ -9,6 +9,40 @@ package body Yeison_12 is
 
    package References is new Impl.References (Any, To_Any);
 
+   ---------------
+   -- Iterators --
+   ---------------
+
+   package Iterators is new Impl.Iterators (Any, To_Any);
+
+   -----------
+   -- First --
+   -----------
+
+   function First (Container : Any) return Impl.Cursor renames
+     Iterators.First_Cursor;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (Container : Any; Position : Impl.Cursor) return Impl.Cursor renames
+     Iterators.Next_Cursor;
+
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element (Container : Any; Position : Impl.Cursor) return Boolean renames
+     Iterators.Has_Element;
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element (Container : Any; Position : Impl.Cursor) return Any renames
+     Iterators.Element;
+
    -------------
    -- Has_Key --
    -------------

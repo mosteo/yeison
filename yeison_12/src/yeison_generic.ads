@@ -48,10 +48,10 @@ package Yeison_Generic with Preelaborate is
 
    subtype Text is Wide_Wide_String;
 
-   type Any is new Ada.Finalization.Controlled with private;
-   --  No aspects here. This forces us to expose them in Yeison_12 and
-   --  Yeison_22, which involves some duplication, but otherwise there are
-   --  some ambiguities that rain on our parade...
+type Any is new Ada.Finalization.Controlled with private;
+--  No other aspects here. This forces us to expose them in Yeison_12 and
+--  Yeison_22, which involves some duplication, but otherwise there are
+--  some ambiguities that rain on our parade...
 
    function "=" (L, R : Any) return Boolean;
    function "=" (L : Any; R : Text) return Boolean;
@@ -205,6 +205,8 @@ package Yeison_Generic with Preelaborate is
 
    end Scalars;
 
+   subtype Base_Any is Any;
+
    ----------------
    -- References --
    ----------------
@@ -267,6 +269,24 @@ package Yeison_Generic with Preelaborate is
       --  Taking the tail of an empty vector is an error
 
    end References;
+
+   -----------------
+   --  Iterators  --
+   -----------------
+
+   type Cursor (<>) is private;
+
+   generic
+      type Any is new Yeison_Generic.Any with private;
+      with function To_Any (This : Yeison_Generic.Any) return Any is <>;
+   package Iterators is
+
+      function First_Cursor (Container : Any) return Cursor;
+      function Next_Cursor (Container  : Any; Pos : Cursor) return Cursor;
+      function Has_Element (Container  : Any; Pos : Cursor) return Boolean;
+      function Element (Container : Any; Pos : Cursor) return Any;
+
+   end Iterators;
 
 private
 
@@ -359,5 +379,19 @@ private
       function New_Real (Val : Real_Type) return Any;
       function New_Text (Val : Text)      return Any;
    end Base;
+
+   --  Cursor type for iteration
+   type Cursor_Kind is (Invalid, Map_Cursor, Vec_Cursor);
+
+   type Cursor (Kind : Cursor_Kind := Invalid) is record
+      case Kind is
+         when Invalid =>
+            null;
+         when Map_Cursor =>
+            Map_Pos : Any_Maps.Cursor;
+         when Vec_Cursor =>
+            Vec_Pos : Universal_Positive;
+      end case;
+   end record;
 
 end Yeison_Generic;
