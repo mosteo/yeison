@@ -593,7 +593,8 @@ package body Yeison_Generic is
       -------------
 
       function Has_Key (This : Any; Key : Any) return Boolean
-      is (for some C in This.Impl.Map.Iterate => Any_Maps.Key (C) = Key);
+      is (for some C in This.Impl.Map.Iterate =>
+             To_Any (Yeison_Generic.Any (Any_Maps.Key (C))) = Key);
 
       ----------
       -- Head --

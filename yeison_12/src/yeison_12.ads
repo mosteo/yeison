@@ -89,8 +89,8 @@ package Yeison_12 with Preelaborate is
      Pre => This.Kind = Map_Kind;
    --  Convenience to directly index with a string
 
-   function Reference (This : Any; I : Integer) return Ref with
-     Pre => This.Kind = Vec_Kind;
+   --  function Reference (This : Any; I : Integer) return Ref with
+   --    Pre => This.Kind = Vec_Kind;
 
    function Has_Key (This : Any; Key : UTF_8_String) return Boolean;
    function Has_Field (This : Any; Key : UTF_8_String) return Boolean
