@@ -249,6 +249,10 @@ package Yeison_Generic with Preelaborate is
       function Has_Key (This : Any; Key : Any) return Boolean with
         Pre => This.Kind = Map_Kind;
 
+      function Keys (This : Any) return Any with
+        Pre  => This.Kind = Map_Kind,
+        Post => Keys'Result.Kind = Vec_Kind;
+
       ---------------
       --  Vectors  --
       ---------------
