@@ -485,29 +485,6 @@ package body Yeison_Generic is
    is (This.Kind /= Nil_Kind);
 
    ----------
-   -- Keys --
-   ----------
-
-   function Keys (This : Any; Ordered : Boolean := False) return Any_Array is
-      Result : Any_Array (1 .. Integer (This.Impl.Map.Length));
-      Pos    : Positive := 1;
-   begin
-      if Ordered then
-         for I in This.Impl.Map.Iterate loop
-            Result (Pos) := Any (Any_Maps.Key (I));
-            Pos := Pos + 1;
-         end loop;
-      else
-         for Key of This.Impl.Keys loop
-            Result (Pos) := Any (Key);
-            Pos := Pos + 1;
-         end loop;
-      end if;
-
-      return Result;
-   end Keys;
-
-   ----------
    -- Kind --
    ----------
 
@@ -557,6 +534,17 @@ package body Yeison_Generic is
    procedure Append (This : in out Any; Elem : Any) is
    begin
       This.Impl.Vec.Append (Elem);
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   function Append (This : Any; Elem : Any) return Any is
+   begin
+      return Result : Any := This do
+         Result.Append (Elem);
+      end return;
    end Append;
 
    ------------
@@ -610,12 +598,18 @@ package body Yeison_Generic is
       -- Keys --
       ----------
 
-      function Keys (This : Any) return Any is
+      function Keys (This : Any; Ordered : Boolean := False) return Any is
       begin
-         return Result : Any do
-            for Key of This.Impl.Keys loop
-               Result.Append (To_Any (Base_Any (Key)));
-            end loop;
+         return Result : Any := Empty_Vec do
+            if Ordered then
+               for I in This.Impl.Map.Iterate loop
+                  Result.Append (To_Any (Base_Any (Any_Maps.Key (I))));
+               end loop;
+            else
+               for Key of This.Impl.Keys loop
+                  Result.Append (To_Any (Base_Any (Key)));
+               end loop;
+            end if;
          end return;
       end Keys;
 
@@ -719,7 +713,7 @@ package body Yeison_Generic is
             --  Access the position. At this point Pos must be a scalar
 
             case This.Kind is
-            when Scalar_Kinds =>
+            when Nil_Kind | Scalar_Kinds =>
                --  Do not allow indexing an scalar at all
                Constraint_Error ("non-composite value", Pos);
                return null;
@@ -740,7 +734,7 @@ package body Yeison_Generic is
                return Self
                  (This.Impl.Map.Constant_Reference (Pos).Element.all);
 
-            when others =>
+            when Vec_Kind =>
                if Univ (This.Impl.Vec.Length) + 1 < To_Integer (Pos.As_Int)
                then
                   Constraint_Error

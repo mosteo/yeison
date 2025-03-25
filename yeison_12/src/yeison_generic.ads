@@ -175,19 +175,16 @@ type Any is new Ada.Finalization.Controlled with private;
                     Value   : Any;
                     Replace : Boolean := False)
                     return Any;
-
-   function Keys (This : Any; Ordered : Boolean := False) return Any_Array with
-     Pre => This.Kind = Map_Kind;
-   --  Keys, in either the original addition order, or in alphabetical order.
-   --  This is a chapuza until we have proper iteration over Any values. Note
-   --  that in the versioned clients, Any is of a different derived type!
-   --  That's why this doesn't have much future...
+   --  Returns a copy with the new inserted value
 
    ---------------
    --  Vectors  --
    ---------------
 
    procedure Append (This : in out Any; Elem : Any) with
+     Pre => This.Kind = Vec_Kind;
+
+   function Append (This : Any; Elem : Any) return Any with
      Pre => This.Kind = Vec_Kind;
 
    function Empty_Vec return Any;
@@ -251,7 +248,7 @@ type Any is new Ada.Finalization.Controlled with private;
       function Has_Key (This : Any; Key : Any) return Boolean with
         Pre => This.Kind = Map_Kind;
 
-      function Keys (This : Any) return Any with
+      function Keys (This : Any; Ordered : Boolean := False) return Any with
         Pre  => This.Kind = Map_Kind,
         Post => Keys'Result.Kind = Vec_Kind;
 

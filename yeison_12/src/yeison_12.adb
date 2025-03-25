@@ -7,7 +7,34 @@ package body Yeison_12 is
    function To_Any (This : Impl.Any) return Any
    is (This with null record);
 
+   ----------------
+   -- References --
+   ----------------
+
    package References is new Impl.References (Any, To_Any);
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (This : in out Any; Str : Text) is
+   begin
+      This.Append (Make.Str (Str));
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   function Append (This : Any; Str : Text) return Any
+   is (This.Append (Make.Str (Str)));
+
+   ----------
+   -- Keys --
+   ----------
+
+   function Keys (This : Any; Ordered : Boolean := False) return Any
+                  renames References.Keys;
 
    ---------------
    -- Iterators --
@@ -70,6 +97,13 @@ package body Yeison_12 is
 
    function Reference (This : Any; Pos : UTF_8_String) return Ref
    is (This.Reference (Make.Str (Yeison_Utils.Decode (Pos))));
+
+   ---------------
+   -- Reference --
+   ---------------
+
+   function Reference (This : Any; Pos : Big_Int) return Ref
+   is (This.Reference (Make.Int (Pos)));
 
    ----------
    -- Self --

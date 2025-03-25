@@ -61,6 +61,24 @@ package Yeison_12 with Preelaborate is
    function True return Any;
    function False return Any;
 
+   ----------
+   -- Maps --
+   ----------
+
+   function Keys (This : Any; Ordered : Boolean := False) return Any with
+     Pre  => This.Kind = Map_Kind,
+     Post => Keys'Result.Kind = Vec_Kind;
+
+   -------------
+   -- Vectors --
+   -------------
+
+   procedure Append (This : in out Any; Str : Text) with
+     Pre => This.Kind = Vec_Kind;
+
+   function Append (This : Any; Str : Text) return Any with
+     Pre => This.Kind = Vec_Kind;
+
    ---------------
    -- Iterators --
    ---------------
@@ -102,11 +120,11 @@ package Yeison_12 with Preelaborate is
    --  force either one, assign first an empty value.
 
    function Reference (This : Any; Pos : UTF_8_String) return Ref with
-     Pre => This.Kind = Map_Kind;
+     Pre => This.Kind in Map_Kind;
    --  Convenience to directly index with a string
 
-   --  function Reference (This : Any; I : Integer) return Ref with
-   --    Pre => This.Kind = Vec_Kind;
+   function Reference (This : Any; Pos : Big_Int) return Ref with
+     Pre => This.Kind in Composite_Kinds;
 
    function Has_Key (This : Any; Key : UTF_8_String) return Boolean;
    function Has_Field (This : Any; Key : UTF_8_String) return Boolean

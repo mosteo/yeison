@@ -78,9 +78,9 @@ begin
    Report ("hetero vec", To_Vec ((+1, +"two", +3)));
 
    declare
-      V : Any;
+      V : constant Any := Empty_Vec;
    begin
-      V (+1) := +"one";
+      V (1) := +"one";
    end;
 
    --  References
