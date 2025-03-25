@@ -53,6 +53,9 @@ package Yeison_Generic with Preelaborate is
    --  Yeison_22, which involves some duplication, but otherwise there are
    --  some ambiguities that rain on our parade...
 
+   function "=" (L, R : Any) return Boolean;
+   function "=" (L : Any; R : Text) return Boolean;
+
    --  TODO: remove tagged once GNAT accepts dot notation for all private types
 
    --------------
@@ -123,6 +126,13 @@ package Yeison_Generic with Preelaborate is
 
    function As_Latin_1 (This : Any) return String
      with Pre => This.Kind = Str_Kind;
+
+   --  Overloaded renamings
+   function Get (This : Any'Class) return Scalar    renames As_Scalar;
+   function Get (This : Any) return Boolean         renames As_Bool;
+   function Get (This : Any) return Int_Type        renames As_Int;
+   function Get (This : Any) return Real_Type       renames As_Real;
+   function Get (This : Any) return Text            renames As_Text;
 
    --  See package Make below for initializations
 

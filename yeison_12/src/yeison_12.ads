@@ -70,8 +70,8 @@ package Yeison_12 with Preelaborate is
    --  We need to recreate references for the access discriminant to use the
    --  proper type...
 
-   function Const_Ref (This : Any; Pos : Any) return Const with
-     Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
+   --  function Const_Ref (This : Any; Pos : Any) return Const with
+   --    Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  See notes on Reference below. Same applies, except for the
    --  initialization of empty maps/vectors.
 
@@ -107,6 +107,8 @@ package Yeison_12 with Preelaborate is
       package Impl is new Yeison_12.Impl.Operators (Any);
 
       function "+" (This : Big_Int) return Any renames Impl.Make.Int;
+      function "+" (This : Big_Real) return Any is
+        (Impl.Make.Real (Reals.New_Real (This)));
       function "+" (This : Text) return Any renames Impl.Make.Str;
       function To_Vec (This : Impl.Any_Array) return Any renames Impl.Vec;
 

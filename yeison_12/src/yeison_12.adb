@@ -20,8 +20,8 @@ package body Yeison_12 is
    -- Const_Ref --
    ---------------
 
-   function Const_Ref (This : Any; Pos : Any) return Const
-   is (Element => References.Reference (This, Pos));
+   --  function Const_Ref (This : Any; Pos : Any) return Const
+   --  is (Element => References.Reference (This, Pos));
 
    ---------------
    -- Reference --

@@ -38,6 +38,16 @@ package body Yeison_Generic is
      with Dynamic_Predicate =>
        (if Any_Impl.Kind = Map_Kind then Map.Length = Keys.Length);
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (L, R : Any) return Boolean
+   is (L.Impl.all = R.Impl.all);
+
+   function "=" (L : Any; R : Text) return Boolean
+   is (L.Kind = Str_Kind and then L.As_Text = R);
+
    --------------
    -- Nil_Impl --
    --------------
