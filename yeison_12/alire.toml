@@ -11,3 +11,6 @@ website = "https://github.com/mosteo/yeison"
 
 [build-switches]
 "*".ada_version = "Ada12"
+
+[test]
+runner = "alire"

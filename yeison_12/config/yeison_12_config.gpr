@@ -22,29 +22,6 @@ abstract project Yeison_12_Config is
            ,"-gnatVa" -- All validity checks
            ,"-gnatwe" -- Warnings as errors
            ,"-gnata" -- Enable assertions and contracts
-           ,"-gnaty3" -- Specify indentation level of 3
-           ,"-gnatya" -- Check attribute casing
-           ,"-gnatyA" -- Use of array index numbers in array attributes
-           ,"-gnatyB" -- Check Boolean operators
-           ,"-gnatyb" -- Blanks not allowed at statement end
-           ,"-gnatyc" -- Check comments
-           ,"-gnaty-d" -- Disable check no DOS line terminators present
-           ,"-gnatye" -- Check end/exit labels
-           ,"-gnatyf" -- No form feeds or vertical tabs
-           ,"-gnatyh" -- No horizontal tabs
-           ,"-gnatyi" -- Check if-then layout
-           ,"-gnatyI" -- check mode IN keywords
-           ,"-gnatyk" -- Check keyword casing
-           ,"-gnatyl" -- Check layout
-           ,"-gnatym" -- Check maximum line length
-           ,"-gnatyn" -- Check casing of entities in Standard
-           ,"-gnatyO" -- Check that overriding subprograms are explicitly marked as such
-           ,"-gnatyp" -- Check pragma casing
-           ,"-gnatyr" -- Check identifier references casing
-           ,"-gnatyS" -- Check no statements after THEN/ELSE
-           ,"-gnatyt" -- Check token spacing
-           ,"-gnatyu" -- Check unnecessary blank lines
-           ,"-gnatyx" -- Check extra parentheses
            ,"-gnat12" -- Ada 2012 Mode
            ,"-gnatW8" -- UTF-8 encoding for wide characters
           );

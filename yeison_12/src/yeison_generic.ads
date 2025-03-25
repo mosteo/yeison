@@ -121,6 +121,9 @@ package Yeison_Generic with Preelaborate is
    function As_UTF_8 (This : Any) return String
      with Pre => This.Kind = Str_Kind;
 
+   function As_Latin_1 (This : Any) return String
+     with Pre => This.Kind = Str_Kind;
+
    --  See package Make below for initializations
 
    -------------------
@@ -195,7 +198,9 @@ package Yeison_Generic with Preelaborate is
    ----------------
    -- References --
    ----------------
-
+   --  This unwanted complexity is caused by wanting to reuse logic in the
+   --  derived types for both the 2012 and 2022 versions. It really is not
+   --  worth the effort, lesson learned.
    generic
       type Any is new Yeison_Generic.Any with private;
       with function To_Any (This : Yeison_Generic.Any) return Any is <>;

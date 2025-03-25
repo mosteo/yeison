@@ -7,7 +7,7 @@ with GNAT.IO; use GNAT.IO;
 
 with Yeison_12; use Yeison_12; use Yeison_12.Operators;
 
-procedure Test_12 is
+procedure Yeison_12_Tests.Example is
 
    package Yeison renames Yeison_12;
 
@@ -117,4 +117,4 @@ begin
    pragma Assert
      (Empty_Map.Insert (+"key", +"val") (+"key").As_Text = "val");
 
-end Test_12;
+end Yeison_12_Tests.Example;

@@ -1,3 +1,4 @@
+with Ada.Characters.Conversions;
 with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Tags; use Ada.Tags;
@@ -187,6 +188,13 @@ package body Yeison_Generic is
 
    function As_UTF_8 (This : Any) return String
    is (Yeison_Utils.Encode (This.As_Text));
+
+   ----------------
+   -- As_Latin_1 --
+   ----------------
+
+   function As_Latin_1 (This : Any) return String
+   is (Ada.Characters.Conversions.To_String (This.As_Text));
 
    ---------------
    -- Empty_Map --
