@@ -183,7 +183,12 @@ package body Yeison_Generic is
             return True;
          end if;
 
-         --  If we get here, all elements were equal
+         --  If R is shorter than L, L is not less than R
+         if Any_Maps.Has_Element (L_Cursor) then
+            return False;
+         end if;
+
+         --  If we get here, all elements were equal and maps are same length
          return False;
       end Compare_Maps;
 
@@ -853,19 +858,27 @@ package body Yeison_Generic is
                  (This.Impl.Map.Constant_Reference (Pos).Element.all);
 
             when Vec_Kind =>
-               if Univ (This.Impl.Vec.Length) + 1 < To_Integer (Pos.As_Int)
-               then
-                  Constraint_Error
-                    ("vector beyond 'length + 1 when 'length ="
-                     & This.Impl.Vec.Length'Image, Pos);
-               end if;
+               declare
+                  Index : constant Univ := To_Integer (Pos.As_Int);
+               begin
+                  if Index <= 0 then
+                     Constraint_Error
+                       ("vector with non-positive index " & Index'Image, Pos);
+                  end if;
 
-               if Univ (This.Impl.Vec.Length) < To_Integer (Pos.As_Int) then
-                  This.Impl.Vec.Append (To_Any (Base.New_Nil));
-               end if;
+                  if Univ (This.Impl.Vec.Length) + 1 < Index then
+                     Constraint_Error
+                       ("vector beyond 'length + 1 when 'length ="
+                        & This.Impl.Vec.Length'Image, Pos);
+                  end if;
 
-               return Self (This.Impl.Vec.Constant_Reference
-                            (To_Integer (Pos.As_Int)).Element.all);
+                  if Univ (This.Impl.Vec.Length) < Index then
+                     This.Impl.Vec.Append (To_Any (Base.New_Nil));
+                  end if;
+
+                  return Self (This.Impl.Vec.Constant_Reference
+                               (Index).Element.all);
+               end;
             end case;
          end Ref_By_Scalar;
 
