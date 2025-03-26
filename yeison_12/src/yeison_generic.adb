@@ -222,6 +222,24 @@ package body Yeison_Generic is
    is (Ada.Finalization.Controlled with
          Impl => new Any_Impl'(Kind => Vec_Kind, others => <>));
 
+   -----------------
+   -- First_Index --
+   -----------------
+
+   function First_Index (This : Any) return Universal_Integer is
+   begin
+      return Universal_Integer (This.Impl.Vec.First_Index);
+   end First_Index;
+
+   ----------------
+   -- Last_Index --
+   ----------------
+
+   function Last_Index (This : Any) return Universal_Integer is
+   begin
+      return Universal_Integer (This.Impl.Vec.Last_Index);
+   end Last_Index;
+
    ----------------
    -- JSON_Quote --
    ----------------
@@ -798,15 +816,15 @@ package body Yeison_Generic is
                if Container.Impl.Map.Is_Empty then
                   return (Kind => Invalid);
                else
-                  return (Kind         => Map_Cursor,
-                          Map_Pos      => Container.Impl.Map.First);
+                  return (Kind    => Map_Cursor,
+                          Map_Pos => Container.Impl.Map.First);
                end if;
             when Vec_Kind =>
                if Container.Impl.Vec.Is_Empty then
                   return (Kind => Invalid);
                else
-                  return (Kind         => Vec_Cursor,
-                          Vec_Pos      => Container.Impl.Vec.First_Index);
+                  return (Kind    => Vec_Cursor,
+                          Vec_Pos => Container.Impl.Vec.First);
                end if;
             when others =>
                return (Kind => Invalid);
@@ -818,6 +836,7 @@ package body Yeison_Generic is
       -----------------
 
       function Next_Cursor (Container : Any; Pos : Cursor) return Cursor is
+         pragma Unreferenced (Container);
       begin
          case Pos.Kind is
             when Map_Cursor =>
@@ -832,12 +851,16 @@ package body Yeison_Generic is
                   end if;
                end;
             when Vec_Cursor =>
-               if Pos.Vec_Pos < Container.Impl.Vec.Last_Index then
-                  return (Kind         => Vec_Cursor,
-                          Vec_Pos      => Pos.Vec_Pos + 1);
-               else
-                  return (Kind => Invalid);
-               end if;
+               declare
+                  Next_Pos : Any_Vecs.Cursor := Pos.Vec_Pos;
+               begin
+                  Any_Vecs.Next (Next_Pos);
+                  if Any_Vecs.Has_Element (Next_Pos) then
+                     return (Kind => Vec_Cursor, Vec_Pos => Next_Pos);
+                  else
+                     return (Kind => Invalid);
+                  end if;
+               end;
             when Invalid =>
                return Pos;
          end case;
@@ -848,12 +871,13 @@ package body Yeison_Generic is
       -----------------
 
       function Has_Element (Container : Any; Pos : Cursor) return Boolean is
+         pragma Unreferenced (Container);
       begin
          case Pos.Kind is
             when Map_Cursor =>
                return Any_Maps.Has_Element (Pos.Map_Pos);
             when Vec_Cursor =>
-               return Pos.Vec_Pos <= Container.Impl.Vec.Last_Index;
+               return Any_Vecs.Has_Element (Pos.Vec_Pos);
             when Invalid =>
                return False;
          end case;
@@ -864,6 +888,7 @@ package body Yeison_Generic is
       -------------
 
       function Element (Container : Any; Pos : Cursor) return Any is
+         pragma Unreferenced (Container);
       begin
          case Pos.Kind is
             when Map_Cursor =>
@@ -871,7 +896,7 @@ package body Yeison_Generic is
                return To_Any (Base_Any (Any_Maps.Element (Pos.Map_Pos)));
             when Vec_Cursor =>
                return To_Any
-                 (Base_Any (Container.Impl.Vec.Element (Pos.Vec_Pos)));
+                 (Base_Any (Any_Vecs.Element (Pos.Vec_Pos)));
             when Invalid =>
                raise Constraint_Error with "Invalid cursor";
          end case;

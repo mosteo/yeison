@@ -189,6 +189,12 @@ type Any is new Ada.Finalization.Controlled with private;
 
    function Empty_Vec return Any;
 
+   function First_Index (This : Any) return Universal_Integer with
+     Pre => This.Kind = Vec_Kind;
+
+   function Last_Index (This : Any) return Universal_Integer with
+     Pre => This.Kind = Vec_Kind;
+
    -------------
    -- Scalars --
    -------------
@@ -387,7 +393,7 @@ private
          when Map_Cursor =>
             Map_Pos : Any_Maps.Cursor;
          when Vec_Cursor =>
-            Vec_Pos : Universal_Positive;
+            Vec_Pos : Any_Vecs.Cursor;
       end case;
    end record;
 

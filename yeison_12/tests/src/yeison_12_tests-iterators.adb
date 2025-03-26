@@ -40,4 +40,6 @@ begin
          I := I + 1;
       end loop;
    end;
+
+   Assert (Keys.Element (Keys.First) = "one");
 end Yeison_12_Tests.Iterators;
