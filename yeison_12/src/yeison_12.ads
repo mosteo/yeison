@@ -50,6 +50,7 @@ package Yeison_12 with Preelaborate is
    --  Resurface non-inherited things
 
    subtype Kinds is Impl.Kinds;
+   subtype Image_Formats is Impl.Image_Formats;
 
    subtype Scalar_Kinds is Impl.Scalar_Kinds;
    subtype Composite_Kinds is Impl.Composite_Kinds;

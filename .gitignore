@@ -5,6 +5,8 @@ alire/
 config/
 
 *-loc.xml
+*.stderr
+*.stdout
 
 gpsauto.cgpr
 root
