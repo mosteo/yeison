@@ -136,6 +136,87 @@ package body Yeison_Generic is
 
    function "<" (L, R : Any_Impl) return Boolean is
       use type WWUString;
+
+      ------------------
+      -- Compare_Maps --
+      ------------------
+
+      function Compare_Maps return Boolean is
+         -- Compare keys in order
+         L_Cursor : Any_Maps.Cursor := L.Map.First;
+         R_Cursor : Any_Maps.Cursor := R.Map.First;
+      begin
+         while Any_Maps.Has_Element (L_Cursor)
+           and then Any_Maps.Has_Element (R_Cursor)
+         loop
+            declare
+               L_Key : Any'Class renames Any_Maps.Key (L_Cursor);
+               R_Key : Any'Class renames Any_Maps.Key (R_Cursor);
+            begin
+               if L_Key < R_Key then
+                  return True;
+               elsif R_Key < L_Key then
+                  return False;
+               end if;
+
+               -- Keys are equal, compare values
+               declare
+                  L_Value :
+                    Any'Class renames Any_Maps.Element (L_Cursor);
+                  R_Value :
+                    Any'Class renames Any_Maps.Element (R_Cursor);
+               begin
+                  if L_Value < R_Value then
+                     return True;
+                  elsif R_Value < L_Value then
+                     return False;
+                  end if;
+               end;
+            end;
+
+            Any_Maps.Next (L_Cursor);
+            Any_Maps.Next (R_Cursor);
+         end loop;
+
+         --  If L is shorter than R, it is less
+         if Any_Maps.Has_Element (R_Cursor) then
+            return True;
+         end if;
+
+         --  If we get here, all elements were equal
+         return False;
+      end Compare_Maps;
+
+      ------------------
+      -- Compare_Vecs --
+      ------------------
+
+      function Compare_Vecs return Boolean is
+      -- Compare elements in order
+      begin
+         for I in L.Vec.First_Index .. L.Vec.Last_Index loop
+            exit when I > R.Vec.Last_Index;
+            declare
+               L_Elem : Any'Class renames L.Vec (I);
+               R_Elem : Any'Class renames R.Vec (I);
+            begin
+               if L_Elem < R_Elem then
+                  return True;
+               elsif R_Elem < L_Elem then
+                  return False;
+               end if;
+            end;
+         end loop;
+
+         --  If L is shorter than R, it is less
+         if L.Vec.Last_Index < R.Vec.Last_Index then
+            return True;
+         end if;
+
+         --  If we get here, all elements were equal
+         return False;
+      end Compare_Vecs;
+
    begin
       if L.Kind < R.Kind then
          return True;
@@ -151,8 +232,8 @@ package body Yeison_Generic is
          when Int_Kind  => return L.Val.Int < R.Val.Int;
          when Real_Kind => return L.Val.Real < R.Val.Real;
          when Str_Kind  => return L.Val.Str < R.Val.Str;
-         when Map_Kind  => raise Unimplemented;
-         when Vec_Kind  => raise Unimplemented;
+         when Map_Kind  => return Compare_Maps;
+         when Vec_Kind  => return Compare_Vecs;
       end case;
    end "<";
 
@@ -565,6 +646,26 @@ package body Yeison_Generic is
       end return;
    end Append;
 
+   -----------------
+   -- Insert_Impl --
+   -----------------
+
+   procedure Insert_Impl (Impl    : in out Any_Impl;
+                          Key     : Any'Class;
+                          Value   : Any'Class;
+                          Replace : Boolean := False)
+   is
+   begin
+      if Replace and then Impl.Map.Contains (Key) then
+         Impl.Map.Replace (Key, Value);
+         -- We don't need to update the Keys vector since the key already
+         -- exists.
+      else
+         Impl.Map.Insert (Key, Value);
+         Impl.Keys.Append (Key);
+      end if;
+   end Insert_Impl;
+
    ------------
    -- Insert --
    ------------
@@ -575,14 +676,7 @@ package body Yeison_Generic is
                      Replace : Boolean := False)
    is
    begin
-      if Replace and then This.Impl.Map.Contains (Key) then
-         This.Impl.Map.Replace (Key, Value);
-         -- We don't need to update the Keys vector since the key already
-         -- exists.
-      else
-         This.Impl.Map.Insert (Key, Value);
-         This.Impl.Keys.Append (Key);
-      end if;
+      Insert_Impl (This.Impl.all, Key, Value, Replace);
    end Insert;
 
    ------------
@@ -752,7 +846,7 @@ package body Yeison_Generic is
                --  end if;
 
                if not This.Impl.Map.Contains (Pos) then
-                  This.Impl.Map.Insert (Pos, To_Any (Base.New_Nil));
+                  Insert_Impl (This.Impl.all, Pos, To_Any (Base.New_Nil));
                end if;
 
                return Self

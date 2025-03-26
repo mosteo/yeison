@@ -48,15 +48,19 @@ package Yeison_Generic with Preelaborate is
 
    subtype Text is Wide_Wide_String;
 
-type Any is new Ada.Finalization.Controlled with private;
---  No other aspects here. This forces us to expose them in Yeison_12 and
---  Yeison_22, which involves some duplication, but otherwise there are
---  some ambiguities that rain on our parade...
+   type Any is new Ada.Finalization.Controlled with private;
+   --  No other aspects here. This forces us to expose them in Yeison_12 and
+   --  Yeison_22, which involves some duplication, but otherwise there are
+   --  some ambiguities that rain on our parade...
+
+   --  TODO: remove tagged once GNAT accepts dot notation for all private types
 
    function "=" (L, R : Any) return Boolean;
    function "=" (L : Any; R : Text) return Boolean;
 
-   --  TODO: remove tagged once GNAT accepts dot notation for all private types
+   function "<" (L, R : Any) return Boolean;
+
+   function Precedes (L, R : Any) return Boolean renames "<";
 
    --------------
    --  Common  --
@@ -323,10 +327,6 @@ private
       Impl : Any_Impl_Ptr := Nil_Impl;
    end record with
      Type_Invariant => Impl /= null;
-
-   function "<" (L, R : Any) return Boolean;
-
-   function Precedes (L, R : Any) return Boolean renames "<";
 
    overriding procedure Adjust (This : in out Any);
 
