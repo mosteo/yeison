@@ -575,8 +575,14 @@ package body Yeison_Generic is
                      Replace : Boolean := False)
    is
    begin
-      This.Impl.Map.Insert (Key, Value);
-      This.Impl.Keys.Append (Key);
+      if Replace and then This.Impl.Map.Contains (Key) then
+         This.Impl.Map.Replace (Key, Value);
+         -- We don't need to update the Keys vector since the key already
+         -- exists.
+      else
+         This.Impl.Map.Insert (Key, Value);
+         This.Impl.Keys.Append (Key);
+      end if;
    end Insert;
 
    ------------
@@ -591,7 +597,7 @@ package body Yeison_Generic is
    is
    begin
       return Result : Any := This do
-         Result.Insert (Key, Value);
+         Result.Insert (Key, Value, Replace);
       end return;
    end Insert;
 
