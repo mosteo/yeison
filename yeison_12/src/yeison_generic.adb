@@ -740,9 +740,10 @@ package body Yeison_Generic is
       -- Has_Key --
       -------------
 
-      function Has_Key (This : Any; Key : Any) return Boolean
-      is (for some C in This.Impl.Map.Iterate =>
-             To_Any (Yeison_Generic.Any (Any_Maps.Key (C))) = Key);
+      function Has_Key (This : Any; Key : Any) return Boolean is
+      begin
+         return This.Impl.Map.Contains (Key);
+      end Has_Key;
 
       ----------
       -- Head --
