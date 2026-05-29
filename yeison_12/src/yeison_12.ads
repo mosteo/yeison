@@ -1,5 +1,7 @@
 pragma Ada_2012;
 
+with Ada.Iterator_Interfaces;
+
 with Yeison_Generic.Operators;
 with Yeison_Utils;
 
@@ -23,15 +25,20 @@ package Yeison_12 with Preelaborate is
                          Reals.General_Real, Reals.Image,
                          "<", Reals."<");
 
+   package Iteration is new
+     Ada.Iterator_Interfaces (Impl.Cursor, Impl.Has_Element);
+
    type Any is new Impl.Any with null record with
      --  Constant_Indexing => Const_Ref,
      Variable_Indexing => Reference,
-     Iterable => (First       => First,
-                  Next        => Next,
-                  Has_Element => Has_Element,
-                  Element     => Element);
-   --  Enabling constant indexing limits how we can use indexing in transient
-   --  expressions. Not sure this is entirely a good idea...
+     --  Iteration via the standard Ada.Iterator_Interfaces machinery rather
+     --  than the lightweight GNAT-specific Iterable aspect: the latter, on
+     --  this controlled type, makes GNAT mis-generate deep finalization for
+     --  types derived from Any that add controlled components (e.g.
+     --  LML.Options.Pragmas.Input_Options), crashing at library finalization.
+     Constant_Indexing => Constant_Reference,
+     Default_Iterator  => Iterate,
+     Iterator_Element  => Any;
 
    subtype Scalar is Impl.Scalar;
 
@@ -91,6 +98,12 @@ package Yeison_12 with Preelaborate is
    function Has_Element (Container : Any; Position : Impl.Cursor) return Boolean;
 
    function Element (Container : Any; Position : Impl.Cursor) return Any;
+   --  Also the Constant_Indexing function: yields the element at Position by
+   --  value, which is what container-element iteration (for E of X) needs.
+
+   function Iterate (Container : Any) return Iteration.Forward_Iterator'Class;
+   --  Default_Iterator: lets clients write "for E of X loop ..." over the
+   --  elements of a map (values) or vector.
 
    ----------------
    --  Indexing  --
@@ -105,10 +118,22 @@ package Yeison_12 with Preelaborate is
    --  We need to recreate references for the access discriminant to use the
    --  proper type...
 
-   --  function Const_Ref (This : Any; Pos : Any) return Const with
-   --    Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
-   --  See notes on Reference below. Same applies, except for the
-   --  initialization of empty maps/vectors.
+   --  The Constant_Indexing functions below cover read contexts. They are
+   --  overloaded on the index so the same aspect serves both container-element
+   --  iteration (for E of X, indexed by a cursor, returned by value) and key
+   --  lookup in a read context (M (Key) / M ("str"), returned as a Const ref).
+
+   function Constant_Reference (This     : Any;
+                                Position : Impl.Cursor) return Any
+                                renames Element;
+   --  Cursor indexing for "for E of X": yields the element by value.
+
+   function Constant_Reference (This : Any; Pos : Any) return Const with
+     Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
+
+   function Constant_Reference (This : Any; Pos : UTF_8_String) return Const
+     with Pre => This.Kind = Map_Kind;
+   --  See notes on Reference below; these are the read-only counterparts.
 
    function Reference (This : Any; Pos : Any) return Ref with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
@@ -161,6 +186,18 @@ private
 
    function True return Any renames Make.True;
    function False return Any renames Make.False;
+
+   --  Forward iterator used by Iterate/Default_Iterator. Holds a reference to
+   --  the container and delegates cursor advancement to Impl's cursor logic.
+
+   type Iterator is new Iteration.Forward_Iterator with record
+      Container : access constant Any;
+   end record;
+
+   overriding function First (Object : Iterator) return Impl.Cursor;
+
+   overriding function Next (Object   : Iterator;
+                             Position : Impl.Cursor) return Impl.Cursor;
 
    -----------------
    -- Nicer_Image --

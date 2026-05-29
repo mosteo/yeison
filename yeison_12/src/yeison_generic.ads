@@ -283,6 +283,11 @@ package Yeison_Generic with Preelaborate is
 
    type Cursor (<>) is private;
 
+   function Has_Element (Pos : Cursor) return Boolean;
+   --  Cursor-only validity test, suitable as the formal of
+   --  Ada.Iterator_Interfaces. A cursor is valid iff it is not the special
+   --  "past the end" value produced by First_Cursor/Next_Cursor.
+
    generic
       type Any is new Yeison_Generic.Any with private;
       with function To_Any (This : Yeison_Generic.Any) return Any is <>;

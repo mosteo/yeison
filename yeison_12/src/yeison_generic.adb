@@ -1018,4 +1018,11 @@ package body Yeison_Generic is
 
    end Iterators;
 
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element (Pos : Cursor) return Boolean
+   is (Pos.Kind /= Invalid);
+
 end Yeison_Generic;
