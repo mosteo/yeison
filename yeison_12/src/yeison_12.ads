@@ -186,7 +186,7 @@ package Yeison_12 with Preelaborate is
                     Value   : Any;
                     Replace : Boolean := False)
                     return Any;
-   --  Returns a copy with the new inserted value
+   --  Returns a *copy* with the new inserted value
 
    function Map (This : Any) return Any is (This) with Inline;
    --  A pass-through to help with disambiguation and esthetics
@@ -239,23 +239,31 @@ package Yeison_12 with Preelaborate is
    --  Indexing  --
    ----------------
 
+   --  For the special case of indexing a mutable vector, we allow indexing one
+   --  past then end, and that will create a new nil element at that position.
+   --  This Allows growing a vector one element at a time. Vectors are 1-based.
+
+   --  For constant vectors, the index must be valid.
+
    type Ref (Element : not null access Any) is limited null record with
      Implicit_Dereference => Element;
 
    type Const (Element : not null access constant Any) is limited null record
      with Implicit_Dereference => Element;
 
-   function Reference (This : Any; Pos : Any) return Ref with
+   function Reference (This : in out Any; Pos : Any) return Ref with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  Pos may be a scalar, used as key/index, or a vector consumed one element
    --  at a time (nested indexing). If This is nil, the appropriate holder (vec
    --  or map) is created depending on Pos.Kind being Int or something else.
 
-   function Reference (This : Any; Pos : UTF_8_String) return Ref with
-     Pre => This.Kind = Map_Kind;
+   function Reference (This : in out Any; Pos : UTF_8_String) return Ref with
+     Pre => This.Is_Nil or else This.Kind = Map_Kind;
+   --  A nil This is auto-vivified into a map (enables nested building).
 
-   function Reference (This : Any; Pos : Big_Int) return Ref with
-     Pre => This.Kind in Composite_Kinds;
+   function Reference (This : in out Any; Pos : Big_Int) return Ref with
+     Pre => This.Is_Nil or else This.Kind in Composite_Kinds;
+   --  A nil This is auto-vivified into a vector (enables nested building).
 
    function Get (This : Any; Pos : Any) return Any with
      Pre => This.Kind in Composite_Kinds
@@ -263,6 +271,10 @@ package Yeison_12 with Preelaborate is
    --  Always returns a copy; for in-place modification use Reference
 
    function Self (This : aliased Any) return Ref;
+   --  A writable reference to This itself, so a whole value can be replaced in
+   --  place (This.Self := New_Value), including a type change. Mainly useful as
+   --  the assignable target at the end of an indexing chain, where the element
+   --  is reached by reference (e.g. Map ("a") ("b").Self := ...).
 
    --  Constant indexing. All overloads return the element BY VALUE (a copy): a
    --  uniform return type is required for the cursor overload, which drives
@@ -275,6 +287,9 @@ package Yeison_12 with Preelaborate is
    function Constant_Reference (This : Any; Pos : UTF_8_String) return Any with
      Pre => This.Kind = Map_Kind;
 
+   function Constant_Reference (This : Any; Pos : Big_Int) return Any with
+     Pre => This.Kind in Composite_Kinds;
+
    ---------------
    -- Iterators --
    ---------------
@@ -283,6 +298,11 @@ package Yeison_12 with Preelaborate is
 
    function Has_Element (Pos : Cursor) return Boolean;
    --  Cursor-only validity test (the formal for Ada.Iterator_Interfaces).
+
+   function First (This : Any) return Cursor;
+   --  Cursor to the first element; Invalid if empty.
+
+   function Element (This : Any; Pos : Cursor) return Any;
 
    package Iteration is new Ada.Iterator_Interfaces (Cursor, Has_Element);
 
@@ -293,7 +313,7 @@ package Yeison_12 with Preelaborate is
    function Constant_Reference (This : Any; Pos : Cursor) return Any;
    --  Cursor indexing for "for E of X" over a constant container.
 
-   function Reference (This : Any; Pos : Cursor) return Ref;
+   function Reference (This : in out Any; Pos : Cursor) return Ref;
    --  Cursor indexing for "for E of X" over a variable container (yields a
    --  modifiable view of the element).
 

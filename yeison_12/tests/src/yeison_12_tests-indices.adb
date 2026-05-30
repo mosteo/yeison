@@ -49,7 +49,6 @@ begin
 
    --  Test that Sample vector elements can be accessed with First_Index
    declare
-      use all type Yeison_12.Kinds;
       Vec_Value : constant Any := Sample ("three");
    begin
       Assert (Vec_Value.Kind = Vec_Kind, "Sample('three') should be a vector");

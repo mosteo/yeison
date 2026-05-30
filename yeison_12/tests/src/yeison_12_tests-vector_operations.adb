@@ -3,8 +3,6 @@ with Yeison_12; use Yeison_12;
 procedure Yeison_12_Tests.Vector_Operations is
    use Operators;
    use type Reals.General_Real;
-   use all type Kinds;
-
    -- Create test vectors
    Empty_V : constant Any := Empty_Vec;
    Single_Element_Vec : constant Any := Empty_Vec.Append (+1);
@@ -17,13 +15,10 @@ procedure Yeison_12_Tests.Vector_Operations is
        .Append (Make.True)
        .Append (+3.14159);
 
-   -- Create a reference to test with
-   package Refs is new Yeison_12.Impl.References (Any, To_Any);
-
 begin
    -- Test Head function with a single element vector
    declare
-      Head_Value : constant Any := Refs.Head (Single_Element_Vec);
+      Head_Value : constant Any := Single_Element_Vec.Head;
    begin
       Assert (Head_Value.As_Int = 1,
               "Head of single element vector should be 1");
@@ -31,7 +26,7 @@ begin
 
    -- Test Head function with a multi-element vector
    declare
-      Head_Value : constant Any := Refs.Head (Multi_Element_Vec);
+      Head_Value : constant Any := Head (Multi_Element_Vec);
    begin
       Assert (Head_Value.As_Int = 1,
               "Head of multi-element vector should be 1");
@@ -39,7 +34,7 @@ begin
 
    -- Test Head function with a mixed-type vector
    declare
-      Head_Value : constant Any := Refs.Head (Mixed_Type_Vec);
+      Head_Value : constant Any := Head (Mixed_Type_Vec);
    begin
       Assert (Head_Value.As_Int = 1,
               "Head of mixed-type vector should be 1");
@@ -47,7 +42,7 @@ begin
 
    -- Test Tail function with a single element vector
    declare
-      Tail_Value : constant Any := Refs.Tail (Single_Element_Vec);
+      Tail_Value : constant Any := Tail (Single_Element_Vec);
    begin
       Assert (Tail_Value.Length = 0,
               "Tail of single element vector should be empty");
@@ -55,7 +50,7 @@ begin
 
    -- Test Tail function with a multi-element vector
    declare
-      Tail_Value : constant Any := Refs.Tail (Multi_Element_Vec);
+      Tail_Value : constant Any := Tail (Multi_Element_Vec);
    begin
       Assert (Tail_Value.Length = 2,
               "Tail of 3-element vector should have length 2");
@@ -67,7 +62,7 @@ begin
 
    -- Test Tail function with a mixed-type vector
    declare
-      Tail_Value : constant Any := Refs.Tail (Mixed_Type_Vec);
+      Tail_Value : constant Any := Tail (Mixed_Type_Vec);
    begin
       Assert (Tail_Value.Length = 3,
               "Tail of 4-element vector should have length 3");
@@ -85,7 +80,7 @@ begin
    begin
       begin
          declare
-            Head_Value : constant Any := Refs.Head (Empty_V) with Unreferenced;
+            Head_Value : constant Any := Head (Empty_V) with Unreferenced;
          begin
             null;
          end;
@@ -103,7 +98,7 @@ begin
    begin
       begin
          declare
-            Tail_Value : constant Any := Refs.Tail (Empty_V) with Unreferenced;
+            Tail_Value : constant Any := Tail (Empty_V) with Unreferenced;
          begin
             null;
          end;

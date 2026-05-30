@@ -283,23 +283,25 @@ package body Yeison_12 is
       Result : WWUString;
 
       function Empty_Map_Image return Text
-      is (case Format is when Ada_Like => "[=>]", when JSON => "{}");
+      is (case Format is when Ada_Like => "()", when JSON => "{}");
 
       function Map_Open return Text
-      is (case Format is when Ada_Like => "[", when JSON => "{");
+      is (case Format is when Ada_Like => "(", when JSON => "{");
 
       function Map_Close return Text
-      is (case Format is when Ada_Like => "]", when JSON => "}");
+      is (case Format is when Ada_Like => ")", when JSON => "}");
 
       function Map_Arrow return Text
       is (case Format is when Ada_Like => " => ", when JSON => ": ");
 
       function Empty_Vec_Image return Text
-      is (case Format is when Ada_Like => "[,]", when JSON => "[]");
+      is (case Format is when Ada_Like => "()", when JSON => "[]");
 
-      function Vec_Open return Text is ("[");
+      function Vec_Open return Text
+      is (case Format is when Ada_Like => "(", when JSON => "[");
 
-      function Vec_Close return Text is ("]");
+      function Vec_Close return Text
+      is (case Format is when Ada_Like => ")", when JSON => "]");
 
       --------------
       -- Traverse --
@@ -587,6 +589,9 @@ package body Yeison_12 is
 
    function Tail (This : Any) return Any is
    begin
+      if This.Is_Empty then
+         raise Constraint_Error with "Tail of empty vector";
+      end if;
       return Result : Any := Empty_Vec do
          for I in This.Impl.Vec.First_Index + 1 .. This.Impl.Vec.Last_Index
          loop
@@ -602,113 +607,127 @@ package body Yeison_12 is
    function Self (This : aliased Any) return Ref
    is (Element => This'Unrestricted_Access);
 
-   ---------------
-   -- Reference --
-   ---------------
+   -------------
+   -- Resolve --
+   -------------
 
-   function Reference (This : Any; Pos : Any) return Ref is
+   --  Single position resolver shared by Reference (read/write) and
+   --  Constant_Reference (read-only). It returns an access to the designated
+   --  element. When Create, missing positions are materialized: a nil target
+   --  is auto-vivified into the proper container, a vector is grown by exactly
+   --  one past its end, and a missing map key is inserted as nil. When not
+   --  Create, any invalid index/key raises Constraint_Error and This is left
+   --  untouched.
+
+   function Resolve (This   : Any;
+                     Pos    : Any;
+                     Create : Boolean) return not null access Any
+   is
+      Target : constant not null access Any := This'Unrestricted_Access;
 
       ----------------------
       -- Constraint_Error --
       ----------------------
 
-      procedure Constraint_Error (Msg : String; Pos : Any'Class) is
+      procedure Constraint_Error (Msg : String) is
       begin
          raise Standard.Constraint_Error
            with "cannot index " & Msg & " when index is "
            & Yeison_Utils.Encode (Pos.Image);
       end Constraint_Error;
 
-      -------------------
-      -- Ref_By_Scalar --
-      -------------------
-
-      function Ref_By_Scalar (This : Any; Pos : Any) return Ref is
-         subtype Univ is Universal_Integer;
-      begin
-         --  Initialize empty vec/map if needed
-
-         if This.Is_Nil then
-            case Pos.Kind is
-               when Int_Kind =>
-                  Self (This).Element.all := Empty_Vec;
-               when Map_Kind =>
-                  Constraint_Error ("null Any with map", Pos);
-               when others =>
-                  Self (This).Element.all := Empty_Map;
-            end case;
-         end if;
-
-         --  Access the position. At this point Pos must be a scalar
-
-         case This.Kind is
-            when Nil_Kind | Scalar_Kinds =>
-               Constraint_Error ("non-composite value", Pos);
-               return Self (This);
-
-            when Map_Kind =>
-               if not This.Impl.Map.Contains (Pos) then
-                  Insert_Impl (This.Impl.all, Pos, Make.Nil);
-               end if;
-
-               return Self
-                 (This.Impl.Map.Constant_Reference (Pos).Element.all);
-
-            when Vec_Kind =>
-               declare
-                  Index : constant Univ := Pos.As_Int;
-               begin
-                  if Index <= 0 then
-                     Constraint_Error
-                       ("vector with non-positive index " & Index'Image, Pos);
-                  end if;
-
-                  if Univ (This.Impl.Vec.Length) + 1 < Index then
-                     Constraint_Error
-                       ("vector beyond 'length + 1 when 'length ="
-                        & This.Impl.Vec.Length'Image, Pos);
-                  end if;
-
-                  if Univ (This.Impl.Vec.Length) < Index then
-                     This.Impl.Vec.Append (Make.Nil);
-                  end if;
-
-                  return Self (This.Impl.Vec.Constant_Reference
-                               (Index).Element.all);
-               end;
-         end case;
-      end Ref_By_Scalar;
-
    begin
       case Pos.Kind is
          when Nil_Kind =>
-            Constraint_Error ("with null index", Pos);
-            return Self (This);
+            Constraint_Error ("with null index");
 
          when Map_Kind =>
-            Constraint_Error ("with a map", Pos);
-            return Self (This);
+            Constraint_Error ("with a map");
 
          when Vec_Kind =>
+            --  Nested indexing: consume one position at a time
             if Pos.Is_Empty then
                raise Standard.Constraint_Error
                  with "cannot index with empty vector";
             elsif Pos.Length = 1 then
-               return Reference (This, Head (Pos));
+               return Resolve (Target.all, Head (Pos), Create);
             else
-               return Reference (Reference (This, Head (Pos)).Element.all,
-                                 Tail (Pos));
+               return Resolve (Resolve (Target.all, Head (Pos), Create).all,
+                               Tail (Pos), Create);
             end if;
 
          when Scalar_Kinds =>
-            return Ref_By_Scalar (This, Pos);
-      end case;
-   end Reference;
+            --  Auto-vivify a nil target (only when creating)
+            if Target.Is_Nil and then Create then
+               if Pos.Kind = Int_Kind then
+                  Target.all := Empty_Vec;
+               else
+                  Target.all := Empty_Map;
+               end if;
+            end if;
 
-   function Reference (This : Any; Pos : UTF_8_String) return Ref
+            case Target.Kind is
+               when Map_Kind =>
+                  if not Target.Impl.Map.Contains (Pos) then
+                     if Create then
+                        Insert_Impl (Target.Impl.all, Pos, Make.Nil);
+                     else
+                        Constraint_Error ("a map without the key");
+                     end if;
+                  end if;
+
+                  return Target.Impl.Map.Reference (Pos).Element.all
+                           'Unrestricted_Access;
+
+               when Vec_Kind =>
+                  if Pos.Kind /= Int_Kind then
+                     Constraint_Error ("a vector with a non-integer index");
+                  end if;
+
+                  declare
+                     Index : constant Universal_Integer := Pos.As_Int;
+                     Len   : constant Universal_Integer :=
+                               Universal_Integer (Target.Impl.Vec.Length);
+                  begin
+                     if Index <= 0 then
+                        Constraint_Error
+                          ("a vector with non-positive index " & Index'Image);
+                     elsif Create then
+                        if Index > Len + 1 then
+                           Constraint_Error
+                             ("a vector beyond 'length + 1 when 'length ="
+                              & Len'Image);
+                        elsif Index = Len + 1 then
+                           Target.Impl.Vec.Append (Make.Nil);
+                        end if;
+                     elsif Index > Len then
+                        Constraint_Error ("a vector out of range");
+                     end if;
+
+                     return Target.Impl.Vec.Reference (Index).Element.all
+                              'Unrestricted_Access;
+                  end;
+
+               when Nil_Kind | Scalar_Kinds =>
+                  Constraint_Error ("a non-composite value");
+            end case;
+      end case;
+
+      --  Unreachable: every branch above either returns or raises.
+      raise Program_Error;
+   end Resolve;
+
+   ---------------
+   -- Reference --
+   ---------------
+
+   function Reference (This : in out Any; Pos : Any) return Ref
+   is (Ref'(Element => Resolve (This, Pos, Create => True)));
+
+   function Reference (This : in out Any; Pos : UTF_8_String) return Ref
    is (This.Reference (Make.Str (Yeison_Utils.Decode (Pos))));
 
-   function Reference (This : Any; Pos : Big_Int) return Ref
+   function Reference (This : in out Any; Pos : Big_Int) return Ref
    is (This.Reference (Make.Int (Pos)));
 
    ---------
@@ -716,17 +735,20 @@ package body Yeison_12 is
    ---------
 
    function Get (This : Any; Pos : Any) return Any
-   is (Reference (This, Pos).Element.all);
+   is (This.Constant_Reference (Pos));
 
    ------------------------
    -- Constant_Reference --
    ------------------------
 
    function Constant_Reference (This : Any; Pos : Any) return Any
-   is (Reference (This, Pos).Element.all);
+   is (Resolve (This, Pos, Create => False).all);
 
    function Constant_Reference (This : Any; Pos : UTF_8_String) return Any
    is (This.Constant_Reference (Make.Str (Yeison_Utils.Decode (Pos))));
+
+   function Constant_Reference (This : Any; Pos : Big_Int) return Any
+   is (This.Constant_Reference (Make.Int (Pos)));
 
    ----------------------------------------------------------------------------
    --  Iteration  ------------------------------------------------------------
@@ -801,8 +823,18 @@ package body Yeison_12 is
    -- First --
    -----------
 
+   function First (This : Any) return Cursor
+   is (First_Cursor (This));
+
    overriding function First (Object : Iterator) return Cursor
    is (First_Cursor (Object.Container.all));
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element (This : Any; Pos : Cursor) return Any
+   is (Constant_Reference (This, Pos));
 
    ----------
    -- Next --
@@ -841,14 +873,17 @@ package body Yeison_12 is
    -- Reference --
    ---------------
 
-   function Reference (This : Any; Pos : Cursor) return Ref is
+   function Reference (This : in out Any; Pos : Cursor) return Ref is
    begin
       case Pos.Kind is
          when Map_Cursor =>
-            --  As above, the modifiable element is the value
-            return Self (This.Impl.Map.Reference (Pos.Map_Pos).Element.all);
+            return Ref'(Element =>
+              This.Impl.Map.Reference (Pos.Map_Pos).Element.all
+              'Unrestricted_Access);
          when Vec_Cursor =>
-            return Self (This.Impl.Vec.Reference (Pos.Vec_Pos).Element.all);
+            return Ref'(Element =>
+              This.Impl.Vec.Reference (Pos.Vec_Pos).Element.all
+              'Unrestricted_Access);
          when Invalid =>
             raise Constraint_Error with "invalid cursor";
       end case;

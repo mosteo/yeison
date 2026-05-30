@@ -22,15 +22,6 @@ procedure Yeison_12_Tests.Example is
       New_Line;
    end Report;
 
-   ---------------
-   -- Report_RW --
-   ---------------
-
-   procedure Report_RW (Label : String; Value : in out Yeison.Any) is
-   begin
-      Report (Label, Value);
-   end Report_RW;
-
 begin
    Report ("empty", Make.Nil);
 
@@ -78,7 +69,7 @@ begin
    Report ("hetero vec", To_Vec ((+1, +"two", +3)));
 
    declare
-      V : constant Any := Empty_Vec;
+      V : Any := Empty_Vec;
    begin
       V (1) := +"one";
    end;
@@ -103,8 +94,8 @@ begin
    Report ("constant indexing",
            Empty_Map.Insert (+"key", +"val")
            (+"key"));
-   Report_RW ("variable indexing",
-              Empty_Map.Insert (+"key", +"val") (+"key"));
+   Report ("variable indexing",
+           Empty_Map.Insert (+"key", +"val") (+"key"));
 
    declare
       M : constant Any := Empty_Map.Insert (+"key", +"val");

@@ -2,7 +2,6 @@ with Yeison_12; use Yeison_12;
 
 procedure Yeison_12_Tests.Index_Validation is
    use Operators;
-   use all type Yeison_12.Kinds;
 
    Test_Vec : Any := Empty_Vec;
 begin
@@ -66,15 +65,32 @@ begin
               "Index beyond length+1 should raise Constraint_Error");
    end;
 
-   -- Test accessing with an index that is exactly one beyond the current length
-   -- (should append a new element)
+   -- Test READING one beyond the current length: constant indexing requires a
+   -- valid index, so this must raise (it must not grow the vector).
    declare
-      Just_Beyond_Access : Any;
+      Just_Beyond_Access : Any with Unreferenced;
+      Success : Boolean := False;
    begin
-      Just_Beyond_Access := Test_Vec (4); -- Length is 3, so 4 is just beyond
+      begin
+         Just_Beyond_Access := Test_Vec (4); -- Length is 3, so 4 is invalid
+         Success := True; -- Should not reach this point
+      exception
+         when Constraint_Error =>
+            null; -- Expected exception
+      end;
+      Assert (not Success,
+              "Reading beyond length should raise Constraint_Error");
+      Assert (Test_Vec.Length = 3,
+              "A failed read must not grow the vector");
+   end;
+
+   -- Test WRITING at exactly one beyond the current length: variable indexing
+   -- creates the new (initially Nil) position, then receives the value.
+   begin
+      Test_Vec (4) := +"grown"; -- Length is 3, so 4 is just beyond
       Assert (Test_Vec.Length = 4,
-              "Vector should grow when accessing at length+1");
-      Assert (Just_Beyond_Access.Kind = Nil_Kind,
-              "New element should be Nil");
+              "Vector should grow when writing at length+1");
+      Assert (Test_Vec (4).As_Text = "grown",
+              "Newly created element should hold the assigned value");
    end;
 end Yeison_12_Tests.Index_Validation;

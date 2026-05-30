@@ -2,8 +2,6 @@ with Yeison_12; use Yeison_12;
 
 procedure Yeison_12_Tests.Image_Formats is
    use Operators;
-   use all type Yeison_12.Image_Formats;
-
    -- Create test data with various types
    Test_Map : constant Any := Empty_Map
      .Insert (+"string", +"value")

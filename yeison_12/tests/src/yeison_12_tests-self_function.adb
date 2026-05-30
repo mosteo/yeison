@@ -2,7 +2,6 @@ with Yeison_12; use Yeison_12;
 
 procedure Yeison_12_Tests.Self_Function is
    use Operators;
-   use all type Kinds;
    use type Reals.General_Real;
 
 begin

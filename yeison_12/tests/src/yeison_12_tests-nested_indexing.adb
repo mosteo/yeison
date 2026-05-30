@@ -2,8 +2,6 @@ with Yeison_12; use Yeison_12;
 
 procedure Yeison_12_Tests.Nested_Indexing is
    use Operators;
-   use all type Kinds;
-
    -- Create a deeply nested structure for testing
    Nested_Map : constant Any := Empty_Map
      .Insert (+"level1", Empty_Map
@@ -119,7 +117,7 @@ begin
 
    -- Test creating a new nested structure through indexing
    declare
-      Dynamic_Nested : constant Any := Empty_Map;
+      Dynamic_Nested : Any := Empty_Map;
    begin
       -- Create a deeply nested structure dynamically
       Dynamic_Nested ("level1") ("level2") ("level3") ("level4") ("level5") := +"dynamic value";
@@ -143,10 +141,11 @@ begin
 
    -- Test creating a nested structure with mixed maps and arrays
    declare
-      Mixed_Dynamic : constant Any := Empty_Map;
+      Mixed_Dynamic : Any := Empty_Map;
    begin
-      -- Create a structure with both maps and arrays
-      Mixed_Dynamic ("array") (1) ("map") (2) := +"mixed value";
+      -- Create a structure with both maps and arrays. Each fresh vector can
+      -- only be grown one element at a time, so the innermost index is 1.
+      Mixed_Dynamic ("array") (1) ("map") (1) := +"mixed value";
 
       -- Verify the structure was created correctly
       Assert (Mixed_Dynamic.Kind = Map_Kind,
@@ -157,9 +156,9 @@ begin
               "Second level should be a map");
       Assert (Mixed_Dynamic ("array") (1) ("map").Kind = Vec_Kind,
               "Third level should be a vector");
-      Assert (Mixed_Dynamic ("array") (1) ("map") (2).Kind = Str_Kind,
+      Assert (Mixed_Dynamic ("array") (1) ("map") (1).Kind = Str_Kind,
               "Fourth level should be a string");
-      Assert (Mixed_Dynamic ("array") (1) ("map") (2).As_Text = "mixed value",
+      Assert (Mixed_Dynamic ("array") (1) ("map") (1).As_Text = "mixed value",
               "Fourth level value should be 'mixed value'");
    end;
 end Yeison_12_Tests.Nested_Indexing;
