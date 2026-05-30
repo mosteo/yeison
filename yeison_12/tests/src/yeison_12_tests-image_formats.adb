@@ -116,7 +116,8 @@ begin
       Empty_Vec_JSON : constant Text :=
         Empty_V.Image(Format => JSON);
    begin
-      Assert (Empty_Map_Ada = "()", "Empty map in Ada format should be '()'");
+      Assert (Empty_Map_Ada = "(=>)",
+              "Empty map in Ada format should be '(=>)'");
       Assert (Empty_Map_JSON = "{}", "Empty map in JSON format should be '{}'");
       Assert (Empty_Vec_Ada = "()", "Empty vector in Ada format should be '()'");
       Assert (Empty_Vec_JSON = "[]", "Empty vector in JSON format should be '[]'");

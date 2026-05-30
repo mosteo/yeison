@@ -283,7 +283,7 @@ package body Yeison_12 is
       Result : WWUString;
 
       function Empty_Map_Image return Text
-      is (case Format is when Ada_Like => "()", when JSON => "{}");
+      is (case Format is when Ada_Like => "(=>)", when JSON => "{}");
 
       function Map_Open return Text
       is (case Format is when Ada_Like => "(", when JSON => "{");
