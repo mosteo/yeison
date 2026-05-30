@@ -600,13 +600,6 @@ package body Yeison_12 is
       end return;
    end Tail;
 
-   ----------
-   -- Self --
-   ----------
-
-   function Self (This : aliased Any) return Ref
-   is (Element => This'Unrestricted_Access);
-
    -------------
    -- Resolve --
    -------------

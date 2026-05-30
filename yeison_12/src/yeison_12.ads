@@ -270,12 +270,6 @@ package Yeison_12 with Preelaborate is
             and then Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  Always returns a copy; for in-place modification use Reference
 
-   function Self (This : aliased Any) return Ref;
-   --  A writable reference to This itself, so a whole value can be replaced in
-   --  place (This.Self := New_Value), including a type change. Mainly useful as
-   --  the assignable target at the end of an indexing chain, where the element
-   --  is reached by reference (e.g. Map ("a") ("b").Self := ...).
-
    --  Constant indexing. All overloads return the element BY VALUE (a copy): a
    --  uniform return type is required for the cursor overload, which drives
    --  "for E of X". By value is fine since a constant-indexing result is

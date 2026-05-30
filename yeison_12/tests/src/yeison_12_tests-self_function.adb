@@ -5,13 +5,12 @@ procedure Yeison_12_Tests.Self_Function is
    use type Reals.General_Real;
 
 begin
-   -- Test Self with scalar values
+   --  Test in-place replacement of scalar values
+
    declare
-      -- Test with boolean
-      Bool_Value : constant Any := Make.False;
+      Bool_Value : Any := Make.False;
    begin
-      -- Change value using Self
-      Bool_Value.Self := Make.True;
+      Bool_Value := Make.True;
       Assert (Bool_Value.Kind = Bool_Kind,
               "Value should still be a boolean");
       Assert (Bool_Value.As_Bool = True,
@@ -19,11 +18,9 @@ begin
    end;
 
    declare
-      -- Test with integer
-      Int_Value : constant Any := +42;
+      Int_Value : Any := +42;
    begin
-      -- Change value using Self
-      Int_Value.Self := +100;
+      Int_Value := +100;
       Assert (Int_Value.Kind = Int_Kind,
               "Value should still be an integer");
       Assert (Int_Value.As_Int = 100,
@@ -31,11 +28,9 @@ begin
    end;
 
    declare
-      -- Test with real
-      Real_Value : constant Any := +3.14159;
+      Real_Value : Any := +3.14159;
    begin
-      -- Change value using Self
-      Real_Value.Self := +2.71828;
+      Real_Value := +2.71828;
       Assert (Real_Value.Kind = Real_Kind,
               "Value should still be a real");
       Assert (Real_Value.As_Real = Reals.New_Real (2.71828),
@@ -43,24 +38,21 @@ begin
    end;
 
    declare
-      -- Test with string
-      Str_Value : constant Any := +"original";
+      Str_Value : Any := +"original";
    begin
-      -- Change value using Self
-      Str_Value.Self := +"modified";
+      Str_Value := +"modified";
       Assert (Str_Value.Kind = Str_Kind,
               "Value should still be a string");
       Assert (Str_Value.As_Text = "modified",
               "Value should be changed to 'modified'");
    end;
 
-   -- Test Self with composite values
+   --  Test in-place replacement of composite values
+
    declare
-      -- Test with map
-      Map_Value : constant Any := Empty_Map.Insert (+"key", +"value");
+      Map_Value : Any := Empty_Map.Insert (+"key", +"value");
    begin
-      -- Change value using Self
-      Map_Value.Self := Empty_Map.Insert (+"new_key", +"new_value");
+      Map_Value := Empty_Map.Insert (+"new_key", +"new_value");
       Assert (Map_Value.Kind = Map_Kind,
               "Value should still be a map");
       Assert (Map_Value.Length = 1,
@@ -72,11 +64,9 @@ begin
    end;
 
    declare
-      -- Test with vector
-      Vec_Value : constant Any := Empty_Vec.Append (+1).Append (+2);
+      Vec_Value : Any := Empty_Vec.Append (+1).Append (+2);
    begin
-      -- Change value using Self
-      Vec_Value.Self := Empty_Vec.Append (+3).Append (+4).Append (+5);
+      Vec_Value := Empty_Vec.Append (+3).Append (+4).Append (+5);
       Assert (Vec_Value.Kind = Vec_Kind,
               "Value should still be a vector");
       Assert (Vec_Value.Length = 3,
@@ -89,64 +79,54 @@ begin
               "Third element should be 5");
    end;
 
-   -- Test changing type using Self
+   --  Test type change via reassignment
+
    declare
-      -- Start with integer
-      Value : constant Any := +42;
+      Value : Any := +42;
    begin
-      -- Change to string
-      Value.Self := +"string";
+      Value := +"string";
       Assert (Value.Kind = Str_Kind,
               "Value should be changed to string");
       Assert (Value.As_Text = "string",
               "Value should be 'string'");
 
-      -- Change to boolean
-      Value.Self := Make.True;
+      Value := Make.True;
       Assert (Value.Kind = Bool_Kind,
               "Value should be changed to boolean");
       Assert (Value.As_Bool = True,
               "Value should be True");
 
-      -- Change to map
-      Value.Self := Empty_Map.Insert (+"key", +"value");
+      Value := Empty_Map.Insert (+"key", +"value");
       Assert (Value.Kind = Map_Kind,
               "Value should be changed to map");
       Assert (Value ("key").As_Text = "value",
               "Map should have key 'key' with value 'value'");
 
-      -- Change to vector
-      Value.Self := Empty_Vec.Append (+1).Append (+2);
+      Value := Empty_Vec.Append (+1).Append (+2);
       Assert (Value.Kind = Vec_Kind,
               "Value should be changed to vector");
       Assert (Value.Length = 2,
               "Vector should have 2 elements");
    end;
 
-   -- Test Self with nil value
    declare
-      -- Start with nil
-      Nil_Value : constant Any := Make.Nil;
+      Nil_Value : Any := Make.Nil;
    begin
-      -- Change to integer
-      Nil_Value.Self := +42;
+      Nil_Value := +42;
       Assert (Nil_Value.Kind = Int_Kind,
               "Value should be changed to integer");
       Assert (Nil_Value.As_Int = 42,
               "Value should be 42");
    end;
 
-   -- Test Self with nested structures
+   --  Test in-place replacement of a nested element via variable indexing
+
    declare
-      -- Create a nested structure
-      Nested : constant Any := Empty_Map
+      Nested : Any := Empty_Map
         .Insert (+"level1", Empty_Map
                  .Insert (+"level2", Empty_Vec.Append (+1).Append (+2)));
    begin
-      -- Modify a nested value using Self
-      Nested ("level1") ("level2").Self := Empty_Vec.Append (+3).Append (+4);
-
-      -- Verify the change
+      Nested ("level1") ("level2") := Empty_Vec.Append (+3).Append (+4);
       Assert (Nested ("level1") ("level2").Kind = Vec_Kind,
               "Nested value should still be a vector");
       Assert (Nested ("level1") ("level2").Length = 2,
@@ -157,20 +137,16 @@ begin
               "Second element should be 4");
    end;
 
-   -- Test Self with empty map and vector
    declare
-      -- Start with empty map
-      Empty_M : constant Any := Empty_Map;
+      Empty_M : Any := Empty_Map;
    begin
-      -- Change to non-empty map
-      Empty_M.Self := Empty_Map.Insert (+"key", +"value");
+      Empty_M := Empty_Map.Insert (+"key", +"value");
       Assert (Empty_M.Kind = Map_Kind,
               "Value should still be a map");
       Assert (Empty_M.Length = 1,
               "Map should have 1 element");
 
-      -- Change back to empty map
-      Empty_M.Self := Empty_Map;
+      Empty_M := Empty_Map;
       Assert (Empty_M.Kind = Map_Kind,
               "Value should still be a map");
       Assert (Empty_M.Length = 0,
@@ -178,18 +154,15 @@ begin
    end;
 
    declare
-      -- Start with empty vector
-      Empty_V : constant Any := Empty_Vec;
+      Empty_V : Any := Empty_Vec;
    begin
-      -- Change to non-empty vector
-      Empty_V.Self := Empty_Vec.Append (+1);
+      Empty_V := Empty_Vec.Append (+1);
       Assert (Empty_V.Kind = Vec_Kind,
               "Value should still be a vector");
       Assert (Empty_V.Length = 1,
               "Vector should have 1 element");
 
-      -- Change back to empty vector
-      Empty_V.Self := Empty_Vec;
+      Empty_V := Empty_Vec;
       Assert (Empty_V.Kind = Vec_Kind,
               "Value should still be a vector");
       Assert (Empty_V.Length = 0,

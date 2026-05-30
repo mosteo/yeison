@@ -79,15 +79,15 @@ begin
    declare
       X : Any;
    begin
-      X.Self := +1;
+      X:= +1;
       Report ("X = 1", X);
-      X.Self := +"one";
+      X:= +"one";
       Report ("X = ""one""", X);
-      X.Self := Any'(Empty_Vec);
+      X:= Any'(Empty_Vec);
       Report ("X = {}", X);
-      X.Self := Empty_Map;
+      X:= Empty_Map;
       Report ("X = {}", X);
-      X.Self := Empty_Vec;
+      X:= Empty_Vec;
       Report ("X = []", X);
    end;
 
