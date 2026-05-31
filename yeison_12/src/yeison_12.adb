@@ -511,14 +511,17 @@ package body Yeison_12 is
       Free (This.Impl);
    exception
       when others =>
-         --  GNAT 13.2 has a finalization bug; suppress spurious exceptions
+         --  GNAT 12/13 has a finalization bug; suppress spurious exceptions
          --  raised during deallocation when built with that compiler. This is
          --  probably a bad idea, it would be better to avoid that compiler
          --  entirely...
          declare
             V : constant String := Compiler_Version.Version;
          begin
-            if V'Length < 4 or else V (V'First .. V'First + 3) /= "13.2" then
+            if V'Length < 2 or else
+              (V (V'First .. V'First + 1) /= "12" and then
+               V (V'First .. V'First + 1) /= "13")
+            then
                raise;
             end if;
          end;
@@ -773,19 +776,19 @@ package body Yeison_12 is
    ---------
 
    function Get (This : Any; Pos : Any) return Any
-   is (This.Constant_Reference (Pos));
+   is (Resolve (This, Pos, Create => False).all);
 
    ------------------------
    -- Constant_Reference --
    ------------------------
 
-   function Constant_Reference (This : Any; Pos : Any) return Any
-   is (Resolve (This, Pos, Create => False).all);
+   function Constant_Reference (This : Any; Pos : Any) return Const
+   is (Const'(Element => Resolve (This, Pos, Create => False)));
 
-   function Constant_Reference (This : Any; Pos : UTF_8_String) return Any
+   function Constant_Reference (This : Any; Pos : UTF_8_String) return Const
    is (This.Constant_Reference (Make.Str (Yeison_Utils.Decode (Pos))));
 
-   function Constant_Reference (This : Any; Pos : Big_Int) return Any
+   function Constant_Reference (This : Any; Pos : Big_Int) return Const
    is (This.Constant_Reference (Make.Int (Pos)));
 
    ----------------------------------------------------------------------------
@@ -872,7 +875,7 @@ package body Yeison_12 is
    -------------
 
    function Element (This : Any; Pos : Cursor) return Any
-   is (Constant_Reference (This, Pos));
+   is (Constant_Reference (This, Pos).Element.all);
 
    ---------
    -- Key --
@@ -910,15 +913,16 @@ package body Yeison_12 is
    -- Constant_Reference --
    ------------------------
 
-   function Constant_Reference (This : Any; Pos : Cursor) return Any is
-      pragma Unreferenced (This);
+   function Constant_Reference (This : Any; Pos : Cursor) return Const is
    begin
       case Pos.Kind is
          when Map_Cursor =>
             --  For maps, we return just the value part, discarding the key
-            return Any_Maps.Element (Pos.Map_Pos);
+            return Const'(Element =>
+              This.Impl.Map.Constant_Reference (Pos.Map_Pos).Element);
          when Vec_Cursor =>
-            return Any_Vecs.Element (Pos.Vec_Pos);
+            return Const'(Element =>
+              This.Impl.Vec.Constant_Reference (Pos.Vec_Pos).Element);
          when Invalid =>
             raise Constraint_Error with "invalid cursor";
       end case;

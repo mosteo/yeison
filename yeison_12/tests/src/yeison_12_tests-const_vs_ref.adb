@@ -3,9 +3,10 @@ with Yeison_12; use Yeison_12;
 --  Exercises the constant-view vs mutable-view semantics in every combination
 --  of the API the author could think of. The two pillars are:
 --
---    * Constant indexing (any read context) returns a COPY by value and
---      requires a valid index/key, raising Constraint_Error otherwise. It
---      never mutates the container.
+--    * Constant indexing (any read context) returns a read-only view of the
+--      element and requires a valid index/key, raising Constraint_Error
+--      otherwise. It never mutates the container. Copying that view into a
+--      fresh Any yields an independent object (value semantics on assignment).
 --
 --    * Variable indexing (assignment target) returns a live, writable view,
 --      auto-vivifies a nil into the proper container, grows a vector by exactly
