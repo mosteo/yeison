@@ -90,6 +90,12 @@ package Yeison with Preelaborate is
    function "<" (L, R : Any) return Boolean;
    function Precedes (L, R : Any) return Boolean renames "<";
 
+   function "-" (Right : Any) return Any with
+     Pre  => Right.Kind in Int_Kind | Real_Kind,
+     Post => "-"'Result.Kind = Right.Kind;
+   --  Unary negation of an integer or real. This also makes negative numeric
+   --  literals work: X : Yeison.Int := -3 is parsed as -(To_Int ("3")).
+
    subtype Bool is Any with Dynamic_Predicate => Bool.Kind = Bool_Kind;
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;

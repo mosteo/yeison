@@ -260,6 +260,31 @@ package body Yeison is
       return General.Value;
    end As_Real_Float;
 
+   ---------
+   -- "-" --
+   ---------
+
+   function Negate (R : Reals.General_Real) return Reals.General_Real is
+      use all type Reals.Classes;
+   begin
+      case R.Class is
+         when Finite   => return Reals.New_Real (-R.Value);
+         when Infinite => return Reals.New_Infinite (not R.Positive);
+         when NaN      => return Reals.New_NaN;
+      end case;
+   end Negate;
+
+   function "-" (Right : Any) return Any is
+   begin
+      case Right.Kind is
+         when Int_Kind  => return New_Int (-Right.As_Int);
+         when Real_Kind => return New_Real (Negate (Right.As_Real));
+         when others    =>
+            raise Constraint_Error
+              with "cannot negate a " & Right.Kind'Image & " value";
+      end case;
+   end "-";
+
    function As_Text (This : Any) return Text is (S (This.Impl.Val.Str));
 
    function As_UTF_8 (This : Any) return String
