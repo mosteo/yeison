@@ -42,4 +42,19 @@ begin
    end;
 
    Assert (Keys.Element (Keys.First) = "one");
+
+   --  Key: iterate over a map and retrieve both key and value via cursor
+   declare
+      M : constant Any :=
+            Empty_Map
+              .Insert (+"alpha", +1)
+              .Insert (+"beta",  +2);
+      C : Cursor := M.First;
+   begin
+      Assert (M.Key (C) = "alpha", "first map key via cursor");
+      Assert (M.Element (C).As_Int = 1, "first map value via cursor");
+      C := M.Iterate.Next (C);
+      Assert (M.Key (C) = "beta", "second map key via cursor");
+      Assert (M.Element (C).As_Int = 2, "second map value via cursor");
+   end;
 end Yeison_12_Tests.Iterators;

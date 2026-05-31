@@ -844,6 +844,23 @@ package body Yeison_12 is
    function Element (This : Any; Pos : Cursor) return Any
    is (Constant_Reference (This, Pos));
 
+   ---------
+   -- Key --
+   ---------
+
+   function Key (This : Any; Pos : Cursor) return Any is
+      pragma Unreferenced (This);
+   begin
+      case Pos.Kind is
+         when Map_Cursor =>
+            return Any_Maps.Key (Pos.Map_Pos);
+         when Vec_Cursor =>
+            raise Constraint_Error with "Key called on a vector cursor";
+         when Invalid =>
+            raise Constraint_Error with "Key called on an invalid cursor";
+      end case;
+   end Key;
+
    ----------
    -- Next --
    ----------
@@ -931,6 +948,9 @@ package body Yeison_12 is
       function Str (This : Text) return Any
       is (Any_Parent with Impl =>
              new Any_Impl'(Str_Kind, (Str_Kind, U (This))));
+
+      function Map return Any renames Yeison_12.Empty_Map;
+      function Vec return Any renames Yeison_12.Empty_Vec;
 
    end Make;
 

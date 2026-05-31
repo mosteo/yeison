@@ -81,6 +81,7 @@ package Yeison_12 with Preelaborate is
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str  is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
+   subtype Map  is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
    subtype Vec  is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
 
    type Any_Array is array (Positive range <>) of Any;
@@ -187,9 +188,6 @@ package Yeison_12 with Preelaborate is
                     Replace : Boolean := False)
                     return Any;
    --  Returns a *copy* with the new inserted value
-
-   function Map (This : Any) return Any is (This) with Inline;
-   --  A pass-through to help with disambiguation and esthetics
 
    function Keys (This : Any; Ordered : Boolean := False) return Any with
      Pre  => This.Kind = Map_Kind,
@@ -298,6 +296,10 @@ package Yeison_12 with Preelaborate is
 
    function Element (This : Any; Pos : Cursor) return Any;
 
+   function Key (This : Any; Pos : Cursor) return Any;
+   --  The map key at the given cursor position; raises Constraint_Error if Pos
+   --  is not a map cursor. This mirrors Element, which returns the value.
+
    package Iteration is new Ada.Iterator_Interfaces (Cursor, Has_Element);
 
    function Iterate (This : Any) return Iteration.Forward_Iterator'Class;
@@ -327,6 +329,9 @@ package Yeison_12 with Preelaborate is
       function Str  (This : Text)               return Any;
 
       function Scalar (This : Yeison_12.Scalar) return Any;
+
+      function Map return Any;
+      function Vec return Any;
    end Make;
 
    function True  return Any renames Make.True;

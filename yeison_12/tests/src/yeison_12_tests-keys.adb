@@ -4,7 +4,7 @@ with Yeison_Utils;
 procedure Yeison_12_Tests.Keys is
    use Operators;
 
-   Test_Map : Any := Empty_Map;
+   Test_Map : Map := Empty_Map;  --  uses Map subtype
 begin
    -- Test with an empty map
    Assert (not Test_Map.Has_Key ("nonexistent"),

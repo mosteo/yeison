@@ -73,4 +73,15 @@ begin
       Assert (A.Kind = Int_Kind, "Make.Scalar of Int scalar: kind");
       Assert (A.As_Int = -7, "Make.Scalar of Int scalar: value");
    end;
+
+   --  Make.Map and Make.Vec factories
+   declare
+      M : constant Any := Make.Map;
+      V : constant Any := Make.Vec;
+   begin
+      Assert (M.Kind = Map_Kind, "Make.Map: kind");
+      Assert (M.Is_Empty,        "Make.Map: empty");
+      Assert (V.Kind = Vec_Kind, "Make.Vec: kind");
+      Assert (V.Is_Empty,        "Make.Vec: empty");
+   end;
 end Yeison_12_Tests.Scalar_Type;
