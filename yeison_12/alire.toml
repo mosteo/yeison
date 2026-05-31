@@ -11,3 +11,9 @@ website = "https://github.com/mosteo/yeison"
 
 [build-switches]
 "*".ada_version = "Ada12"
+
+[[depends-on]]
+# gnat = "<13.2 | >=13.3" # Known bug with finalization at lib level
+
+[test]
+runner = "alire"

@@ -49,11 +49,18 @@ package Yeison_Generic with Preelaborate is
    subtype Text is Wide_Wide_String;
 
    type Any is new Ada.Finalization.Controlled with private;
-   --  No aspects here. This forces us to expose them in Yeison_12 and
+   --  No other aspects here. This forces us to expose them in Yeison_12 and
    --  Yeison_22, which involves some duplication, but otherwise there are
    --  some ambiguities that rain on our parade...
 
    --  TODO: remove tagged once GNAT accepts dot notation for all private types
+
+   function "=" (L, R : Any) return Boolean;
+   function "=" (L : Any; R : Text) return Boolean;
+
+   function "<" (L, R : Any) return Boolean;
+
+   function Precedes (L, R : Any) return Boolean renames "<";
 
    --------------
    --  Common  --
@@ -118,6 +125,19 @@ package Yeison_Generic with Preelaborate is
    function As_Text (This : Any) return Text
      with Pre => This.Kind = Str_Kind;
 
+   function As_UTF_8 (This : Any) return String
+     with Pre => This.Kind = Str_Kind;
+
+   function As_Latin_1 (This : Any) return String
+     with Pre => This.Kind = Str_Kind;
+
+   --  Overloaded renamings
+   function Get (This : Any'Class) return Scalar    renames As_Scalar;
+   function Get (This : Any) return Boolean         renames As_Bool;
+   function Get (This : Any) return Int_Type        renames As_Int;
+   function Get (This : Any) return Real_Type       renames As_Real;
+   function Get (This : Any) return Text            renames As_Text;
+
    --  See package Make below for initializations
 
    -------------------
@@ -125,7 +145,7 @@ package Yeison_Generic with Preelaborate is
    -------------------
 
    function Is_Empty (This : Any) return Boolean with
-     Pre => This.Kind in Composite_Kinds;
+     Pre => This.Is_Nil or else This.Kind in Composite_Kinds;
 
    function Length (This : Any) return Universal_Integer;
 
@@ -159,13 +179,7 @@ package Yeison_Generic with Preelaborate is
                     Value   : Any;
                     Replace : Boolean := False)
                     return Any;
-
-   function Keys (This : Any; Ordered : Boolean := False) return Any_Array with
-     Pre => This.Kind = Map_Kind;
-   --  Keys, in either the original addition order, or in alphabetical order.
-   --  This is a chapuza until we have proper iteration over Any values. Note
-   --  that in the versioned clients, Any is of a different derived type!
-   --  That's why this doesn't have much future...
+   --  Returns a copy with the new inserted value
 
    ---------------
    --  Vectors  --
@@ -174,7 +188,16 @@ package Yeison_Generic with Preelaborate is
    procedure Append (This : in out Any; Elem : Any) with
      Pre => This.Kind = Vec_Kind;
 
+   function Append (This : Any; Elem : Any) return Any with
+     Pre => This.Kind = Vec_Kind;
+
    function Empty_Vec return Any;
+
+   function First_Index (This : Any) return Universal_Integer with
+     Pre => This.Kind = Vec_Kind;
+
+   function Last_Index (This : Any) return Universal_Integer with
+     Pre => This.Kind = Vec_Kind;
 
    -------------
    -- Scalars --
@@ -189,10 +212,14 @@ package Yeison_Generic with Preelaborate is
 
    end Scalars;
 
+   subtype Base_Any is Any;
+
    ----------------
    -- References --
    ----------------
-
+   --  This unwanted complexity is caused by wanting to reuse logic in the
+   --  derived types for both the 2012 and 2022 versions. It really is not
+   --  worth the effort, lesson learned.
    generic
       type Any is new Yeison_Generic.Any with private;
       with function To_Any (This : Yeison_Generic.Any) return Any is <>;
@@ -224,6 +251,17 @@ package Yeison_Generic with Preelaborate is
         and then Pos.Kind in Scalar_Kinds | Vec_Kind;
       --  Note this always returns a copy; for in place modification use Ref
 
+      ------------
+      --  Maps  --
+      ------------
+
+      function Has_Key (This : Any; Key : Any) return Boolean with
+        Pre => This.Kind = Map_Kind;
+
+      function Keys (This : Any; Ordered : Boolean := False) return Any with
+        Pre  => This.Kind = Map_Kind,
+        Post => Keys'Result.Kind = Vec_Kind;
+
       ---------------
       --  Vectors  --
       ---------------
@@ -238,6 +276,29 @@ package Yeison_Generic with Preelaborate is
       --  Taking the tail of an empty vector is an error
 
    end References;
+
+   -----------------
+   --  Iterators  --
+   -----------------
+
+   type Cursor (<>) is private;
+
+   function Has_Element (Pos : Cursor) return Boolean;
+   --  Cursor-only validity test, suitable as the formal of
+   --  Ada.Iterator_Interfaces. A cursor is valid iff it is not the special
+   --  "past the end" value produced by First_Cursor/Next_Cursor.
+
+   generic
+      type Any is new Yeison_Generic.Any with private;
+      with function To_Any (This : Yeison_Generic.Any) return Any is <>;
+   package Iterators is
+
+      function First_Cursor (Container : Any) return Cursor;
+      function Next_Cursor (Container  : Any; Pos : Cursor) return Cursor;
+      function Has_Element (Container  : Any; Pos : Cursor) return Boolean;
+      function Element (Container : Any; Pos : Cursor) return Any;
+
+   end Iterators;
 
 private
 
@@ -271,10 +332,6 @@ private
       Impl : Any_Impl_Ptr := Nil_Impl;
    end record with
      Type_Invariant => Impl /= null;
-
-   function "<" (L, R : Any) return Boolean;
-
-   function Precedes (L, R : Any) return Boolean renames "<";
 
    overriding procedure Adjust (This : in out Any);
 
@@ -330,5 +387,19 @@ private
       function New_Real (Val : Real_Type) return Any;
       function New_Text (Val : Text)      return Any;
    end Base;
+
+   --  Cursor type for iteration
+   type Cursor_Kind is (Invalid, Map_Cursor, Vec_Cursor);
+
+   type Cursor (Kind : Cursor_Kind := Invalid) is record
+      case Kind is
+         when Invalid =>
+            null;
+         when Map_Cursor =>
+            Map_Pos : Any_Maps.Cursor;
+         when Vec_Cursor =>
+            Vec_Pos : Any_Vecs.Cursor;
+      end case;
+   end record;
 
 end Yeison_Generic;

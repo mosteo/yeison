@@ -7,7 +7,7 @@ with GNAT.IO; use GNAT.IO;
 
 with Yeison_12; use Yeison_12; use Yeison_12.Operators;
 
-procedure Test_12 is
+procedure Yeison_12_Tests.Example is
 
    package Yeison renames Yeison_12;
 
@@ -21,15 +21,6 @@ procedure Test_12 is
       Put_Line (Encode (Value.Image));
       New_Line;
    end Report;
-
-   ---------------
-   -- Report_RW --
-   ---------------
-
-   procedure Report_RW (Label : String; Value : in out Yeison.Any) is
-   begin
-      Report (Label, Value);
-   end Report_RW;
 
 begin
    Report ("empty", Make.Nil);
@@ -78,9 +69,9 @@ begin
    Report ("hetero vec", To_Vec ((+1, +"two", +3)));
 
    declare
-      V : Any;
+      V : Any := Empty_Vec;
    begin
-      V (+1) := +"one";
+      V (1) := +"one";
    end;
 
    --  References
@@ -88,23 +79,23 @@ begin
    declare
       X : Any;
    begin
-      X.Self := +1;
+      X:= +1;
       Report ("X = 1", X);
-      X.Self := +"one";
+      X:= +"one";
       Report ("X = ""one""", X);
-      X.Self := Any'(Empty_Vec);
+      X:= Any'(Empty_Vec);
       Report ("X = {}", X);
-      X.Self := Empty_Map;
+      X:= Empty_Map;
       Report ("X = {}", X);
-      X.Self := Empty_Vec;
+      X:= Empty_Vec;
       Report ("X = []", X);
    end;
 
    Report ("constant indexing",
            Empty_Map.Insert (+"key", +"val")
            (+"key"));
-   Report_RW ("variable indexing",
-              Empty_Map.Insert (+"key", +"val") (+"key"));
+   Report ("variable indexing",
+           Empty_Map.Insert (+"key", +"val") (+"key"));
 
    declare
       M : constant Any := Empty_Map.Insert (+"key", +"val");
@@ -117,4 +108,4 @@ begin
    pragma Assert
      (Empty_Map.Insert (+"key", +"val") (+"key").As_Text = "val");
 
-end Test_12;
+end Yeison_12_Tests.Example;

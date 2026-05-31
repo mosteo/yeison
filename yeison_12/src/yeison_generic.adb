@@ -1,6 +1,6 @@
+with Ada.Characters.Conversions;
 with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings.Wide_Wide_Fixed;
-with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
@@ -16,14 +16,6 @@ package body Yeison_Generic is
 
    use type Ada.Containers.Count_Type;
    use all type Ada.Strings.Trim_End;
-
-   pragma Warnings (Off);
-   function Encode (T : Text; Output_BOM : Boolean  := False) return String
-                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
-
-   function Decode (T : String) return Text
-                    renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Decode;
-   pragma Warnings (On);
 
    subtype Any_Parent is Ada.Finalization.Controlled;
 
@@ -45,6 +37,16 @@ package body Yeison_Generic is
    end record
      with Dynamic_Predicate =>
        (if Any_Impl.Kind = Map_Kind then Map.Length = Keys.Length);
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (L, R : Any) return Boolean
+   is (L.Impl.all = R.Impl.all);
+
+   function "=" (L : Any; R : Text) return Boolean
+   is (L.Kind = Str_Kind and then L.As_Text = R);
 
    --------------
    -- Nil_Impl --
@@ -134,6 +136,92 @@ package body Yeison_Generic is
 
    function "<" (L, R : Any_Impl) return Boolean is
       use type WWUString;
+
+      ------------------
+      -- Compare_Maps --
+      ------------------
+
+      function Compare_Maps return Boolean is
+         -- Compare keys in order
+         L_Cursor : Any_Maps.Cursor := L.Map.First;
+         R_Cursor : Any_Maps.Cursor := R.Map.First;
+      begin
+         while Any_Maps.Has_Element (L_Cursor)
+           and then Any_Maps.Has_Element (R_Cursor)
+         loop
+            declare
+               L_Key : Any'Class renames Any_Maps.Key (L_Cursor);
+               R_Key : Any'Class renames Any_Maps.Key (R_Cursor);
+            begin
+               if L_Key < R_Key then
+                  return True;
+               elsif R_Key < L_Key then
+                  return False;
+               end if;
+
+               -- Keys are equal, compare values
+               declare
+                  L_Value :
+                    Any'Class renames Any_Maps.Element (L_Cursor);
+                  R_Value :
+                    Any'Class renames Any_Maps.Element (R_Cursor);
+               begin
+                  if L_Value < R_Value then
+                     return True;
+                  elsif R_Value < L_Value then
+                     return False;
+                  end if;
+               end;
+            end;
+
+            Any_Maps.Next (L_Cursor);
+            Any_Maps.Next (R_Cursor);
+         end loop;
+
+         --  If L is shorter than R, it is less
+         if Any_Maps.Has_Element (R_Cursor) then
+            return True;
+         end if;
+
+         --  If R is shorter than L, L is not less than R
+         if Any_Maps.Has_Element (L_Cursor) then
+            return False;
+         end if;
+
+         --  If we get here, all elements were equal and maps are same length
+         return False;
+      end Compare_Maps;
+
+      ------------------
+      -- Compare_Vecs --
+      ------------------
+
+      function Compare_Vecs return Boolean is
+      -- Compare elements in order
+      begin
+         for I in L.Vec.First_Index .. L.Vec.Last_Index loop
+            exit when I > R.Vec.Last_Index;
+            declare
+               L_Elem : Any'Class renames L.Vec (I);
+               R_Elem : Any'Class renames R.Vec (I);
+            begin
+               if L_Elem < R_Elem then
+                  return True;
+               elsif R_Elem < L_Elem then
+                  return False;
+               end if;
+            end;
+         end loop;
+
+         --  If L is shorter than R, it is less
+         if L.Vec.Last_Index < R.Vec.Last_Index then
+            return True;
+         end if;
+
+         --  If we get here, all elements were equal
+         return False;
+      end Compare_Vecs;
+
    begin
       if L.Kind < R.Kind then
          return True;
@@ -149,8 +237,8 @@ package body Yeison_Generic is
          when Int_Kind  => return L.Val.Int < R.Val.Int;
          when Real_Kind => return L.Val.Real < R.Val.Real;
          when Str_Kind  => return L.Val.Str < R.Val.Str;
-         when Map_Kind  => raise Unimplemented;
-         when Vec_Kind  => raise Unimplemented;
+         when Map_Kind  => return Compare_Maps;
+         when Vec_Kind  => return Compare_Vecs;
       end case;
    end "<";
 
@@ -190,6 +278,20 @@ package body Yeison_Generic is
    is (Ada.Strings.Wide_Wide_Unbounded.To_Wide_Wide_String
        (This.Impl.Val.Str));
 
+   --------------
+   -- As_UTF_8 --
+   --------------
+
+   function As_UTF_8 (This : Any) return String
+   is (Yeison_Utils.Encode (This.As_Text));
+
+   ----------------
+   -- As_Latin_1 --
+   ----------------
+
+   function As_Latin_1 (This : Any) return String
+   is (Ada.Characters.Conversions.To_String (This.As_Text));
+
    ---------------
    -- Empty_Map --
    ---------------
@@ -205,6 +307,24 @@ package body Yeison_Generic is
    function Empty_Vec return Any
    is (Ada.Finalization.Controlled with
          Impl => new Any_Impl'(Kind => Vec_Kind, others => <>));
+
+   -----------------
+   -- First_Index --
+   -----------------
+
+   function First_Index (This : Any) return Universal_Integer is
+   begin
+      return Universal_Integer (This.Impl.Vec.First_Index);
+   end First_Index;
+
+   ----------------
+   -- Last_Index --
+   ----------------
+
+   function Last_Index (This : Any) return Universal_Integer is
+   begin
+      return Universal_Integer (This.Impl.Vec.Last_Index);
+   end Last_Index;
 
    ----------------
    -- JSON_Quote --
@@ -454,6 +574,7 @@ package body Yeison_Generic is
 
    function Is_Empty (This : Any) return Boolean
    is (case This.Kind is
+          when Nil_Kind => True,
           when Map_Kind => This.Impl.Map.Is_Empty,
           when Vec_Kind => This.Impl.Vec.Is_Empty,
           when others   =>
@@ -466,29 +587,6 @@ package body Yeison_Generic is
 
    function Has_Value (This : Any) return Boolean
    is (This.Kind /= Nil_Kind);
-
-   ----------
-   -- Keys --
-   ----------
-
-   function Keys (This : Any; Ordered : Boolean := False) return Any_Array is
-      Result : Any_Array (1 .. Integer (This.Impl.Map.Length));
-      Pos    : Positive := 1;
-   begin
-      if Ordered then
-         for I in This.Impl.Map.Iterate loop
-            Result (Pos) := Any (Any_Maps.Key (I));
-            Pos := Pos + 1;
-         end loop;
-      else
-         for Key of This.Impl.Keys loop
-            Result (Pos) := Any (Key);
-            Pos := Pos + 1;
-         end loop;
-      end if;
-
-      return Result;
-   end Keys;
 
    ----------
    -- Kind --
@@ -543,6 +641,37 @@ package body Yeison_Generic is
    end Append;
 
    ------------
+   -- Append --
+   ------------
+
+   function Append (This : Any; Elem : Any) return Any is
+   begin
+      return Result : Any := This do
+         Result.Append (Elem);
+      end return;
+   end Append;
+
+   -----------------
+   -- Insert_Impl --
+   -----------------
+
+   procedure Insert_Impl (Impl    : in out Any_Impl;
+                          Key     : Any'Class;
+                          Value   : Any'Class;
+                          Replace : Boolean := False)
+   is
+   begin
+      if Replace and then Impl.Map.Contains (Key) then
+         Impl.Map.Replace (Key, Value);
+         -- We don't need to update the Keys vector since the key already
+         -- exists.
+      else
+         Impl.Map.Insert (Key, Value);
+         Impl.Keys.Append (Key);
+      end if;
+   end Insert_Impl;
+
+   ------------
    -- Insert --
    ------------
 
@@ -552,8 +681,7 @@ package body Yeison_Generic is
                      Replace : Boolean := False)
    is
    begin
-      This.Impl.Map.Insert (Key, Value);
-      This.Impl.Keys.Append (Key);
+      Insert_Impl (This.Impl.all, Key, Value, Replace);
    end Insert;
 
    ------------
@@ -568,7 +696,7 @@ package body Yeison_Generic is
    is
    begin
       return Result : Any := This do
-         Result.Insert (Key, Value);
+         Result.Insert (Key, Value, Replace);
       end return;
    end Insert;
 
@@ -588,6 +716,34 @@ package body Yeison_Generic is
    ----------------
 
    package body References is
+
+      ----------
+      -- Keys --
+      ----------
+
+      function Keys (This : Any; Ordered : Boolean := False) return Any is
+      begin
+         return Result : Any := Empty_Vec do
+            if Ordered then
+               for I in This.Impl.Map.Iterate loop
+                  Result.Append (To_Any (Base_Any (Any_Maps.Key (I))));
+               end loop;
+            else
+               for Key of This.Impl.Keys loop
+                  Result.Append (To_Any (Base_Any (Key)));
+               end loop;
+            end if;
+         end return;
+      end Keys;
+
+      -------------
+      -- Has_Key --
+      -------------
+
+      function Has_Key (This : Any; Key : Any) return Boolean is
+      begin
+         return This.Impl.Map.Contains (Key);
+      end Has_Key;
 
       ----------
       -- Head --
@@ -651,7 +807,7 @@ package body Yeison_Generic is
          begin
             raise Standard.Constraint_Error
               with "cannot index " & Msg & " when index is "
-              & Encode (Pos.Image);
+              & Yeison_Utils.Encode (Pos.Image);
          end Constraint_Error;
 
          -------------------
@@ -681,7 +837,7 @@ package body Yeison_Generic is
             --  Access the position. At this point Pos must be a scalar
 
             case This.Kind is
-            when Scalar_Kinds =>
+            when Nil_Kind | Scalar_Kinds =>
                --  Do not allow indexing an scalar at all
                Constraint_Error ("non-composite value", Pos);
                return null;
@@ -696,26 +852,34 @@ package body Yeison_Generic is
                --  end if;
 
                if not This.Impl.Map.Contains (Pos) then
-                  This.Impl.Map.Insert (Pos, To_Any (Base.New_Nil));
+                  Insert_Impl (This.Impl.all, Pos, To_Any (Base.New_Nil));
                end if;
 
                return Self
                  (This.Impl.Map.Constant_Reference (Pos).Element.all);
 
-            when others =>
-               if Univ (This.Impl.Vec.Length) + 1 < To_Integer (Pos.As_Int)
-               then
-                  Constraint_Error
-                    ("vector beyond 'length + 1 when 'length ="
-                     & This.Impl.Vec.Length'Image, Pos);
-               end if;
+            when Vec_Kind =>
+               declare
+                  Index : constant Univ := To_Integer (Pos.As_Int);
+               begin
+                  if Index <= 0 then
+                     Constraint_Error
+                       ("vector with non-positive index " & Index'Image, Pos);
+                  end if;
 
-               if Univ (This.Impl.Vec.Length) < To_Integer (Pos.As_Int) then
-                  This.Impl.Vec.Append (To_Any (Base.New_Nil));
-               end if;
+                  if Univ (This.Impl.Vec.Length) + 1 < Index then
+                     Constraint_Error
+                       ("vector beyond 'length + 1 when 'length ="
+                        & This.Impl.Vec.Length'Image, Pos);
+                  end if;
 
-               return Self (This.Impl.Vec.Constant_Reference
-                            (To_Integer (Pos.As_Int)).Element.all);
+                  if Univ (This.Impl.Vec.Length) < Index then
+                     This.Impl.Vec.Append (To_Any (Base.New_Nil));
+                  end if;
+
+                  return Self (This.Impl.Vec.Constant_Reference
+                               (Index).Element.all);
+               end;
             end case;
          end Ref_By_Scalar;
 
@@ -748,5 +912,117 @@ package body Yeison_Generic is
       end Reference;
 
    end References;
+
+   ---------------
+   -- Iterators --
+   ---------------
+
+   package body Iterators is
+
+      ------------------
+      -- First_Cursor --
+      ------------------
+
+      function First_Cursor (Container : Any) return Cursor is
+      begin
+         case Container.Kind is
+            when Map_Kind =>
+               if Container.Impl.Map.Is_Empty then
+                  return (Kind => Invalid);
+               else
+                  return (Kind    => Map_Cursor,
+                          Map_Pos => Container.Impl.Map.First);
+               end if;
+            when Vec_Kind =>
+               if Container.Impl.Vec.Is_Empty then
+                  return (Kind => Invalid);
+               else
+                  return (Kind    => Vec_Cursor,
+                          Vec_Pos => Container.Impl.Vec.First);
+               end if;
+            when others =>
+               return (Kind => Invalid);
+         end case;
+      end First_Cursor;
+
+      -----------------
+      -- Next_Cursor --
+      -----------------
+
+      function Next_Cursor (Container : Any; Pos : Cursor) return Cursor is
+         pragma Unreferenced (Container);
+      begin
+         case Pos.Kind is
+            when Map_Cursor =>
+               declare
+                  Next_Pos : Any_Maps.Cursor := Pos.Map_Pos;
+               begin
+                  Any_Maps.Next (Next_Pos);
+                  if Any_Maps.Has_Element (Next_Pos) then
+                     return (Kind => Map_Cursor, Map_Pos => Next_Pos);
+                  else
+                     return (Kind => Invalid);
+                  end if;
+               end;
+            when Vec_Cursor =>
+               declare
+                  Next_Pos : Any_Vecs.Cursor := Pos.Vec_Pos;
+               begin
+                  Any_Vecs.Next (Next_Pos);
+                  if Any_Vecs.Has_Element (Next_Pos) then
+                     return (Kind => Vec_Cursor, Vec_Pos => Next_Pos);
+                  else
+                     return (Kind => Invalid);
+                  end if;
+               end;
+            when Invalid =>
+               return Pos;
+         end case;
+      end Next_Cursor;
+
+      -----------------
+      -- Has_Element --
+      -----------------
+
+      function Has_Element (Container : Any; Pos : Cursor) return Boolean is
+         pragma Unreferenced (Container);
+      begin
+         case Pos.Kind is
+            when Map_Cursor =>
+               return Any_Maps.Has_Element (Pos.Map_Pos);
+            when Vec_Cursor =>
+               return Any_Vecs.Has_Element (Pos.Vec_Pos);
+            when Invalid =>
+               return False;
+         end case;
+      end Has_Element;
+
+      -------------
+      -- Element --
+      -------------
+
+      function Element (Container : Any; Pos : Cursor) return Any is
+         pragma Unreferenced (Container);
+      begin
+         case Pos.Kind is
+            when Map_Cursor =>
+               -- For maps, we return just the value part, discarding the key
+               return To_Any (Base_Any (Any_Maps.Element (Pos.Map_Pos)));
+            when Vec_Cursor =>
+               return To_Any
+                 (Base_Any (Any_Vecs.Element (Pos.Vec_Pos)));
+            when Invalid =>
+               raise Constraint_Error with "Invalid cursor";
+         end case;
+      end Element;
+
+   end Iterators;
+
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element (Pos : Cursor) return Boolean
+   is (Pos.Kind /= Invalid);
 
 end Yeison_Generic;
