@@ -13,6 +13,7 @@ website = "https://github.com/mosteo/yeison"
 "*".ada_version = "Ada2022"
 
 [[depends-on]]
+gnat = "<13.2 | >=13.3" # Known bug with finalization at lib level
 yeison_12 = "*"
 
 [[pins]]
