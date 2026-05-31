@@ -1,4 +1,5 @@
-with Yeison_12; use Yeison_12;
+with Yeison_12;     use Yeison_12;
+with Yeison_Utils;
 
 procedure Yeison_12_Tests.Scalar_Type is
    use type Reals.General_Real;
@@ -72,6 +73,16 @@ begin
    begin
       Assert (A.Kind = Int_Kind, "Make.Scalar of Int scalar: kind");
       Assert (A.As_Int = -7, "Make.Scalar of Int scalar: value");
+   end;
+
+   --  Scalar.Image
+   begin
+      Assert (Scalars.New_Bool (True).Image  = "true",  "Scalar.Image bool true");
+      Assert (Scalars.New_Bool (False).Image = "false", "Scalar.Image bool false");
+      Assert (Scalars.New_Int (7).Image      = "7",     "Scalar.Image int");
+      Assert (Scalars.New_Text ("hi").Image  = "hi",    "Scalar.Image str ada_like");
+      Assert (Yeison_Utils.Encode (Scalars.New_Text ("hi").Image (JSON)) = """hi""",
+              "Scalar.Image str json");
    end;
 
    --  Make.Map and Make.Vec factories

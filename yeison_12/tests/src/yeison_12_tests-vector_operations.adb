@@ -161,4 +161,14 @@ begin
       Assert (New_Vec (1).As_Int = 1, "New vector first element should be 1");
       Assert (New_Vec (2).As_Int = 2, "New vector second element should be 2");
    end;
+   --  Real proxies: Make.Real(Big_Real), As_Real_Float, "=" for Big_Real
+   declare
+      R : constant Any := Make.Real (2.5);
+   begin
+      Assert (R.Kind = Real_Kind,      "Make.Real(Big_Real): kind");
+      Assert (R.As_Real_Float = 2.5,   "As_Real_Float: value");
+      Assert (R = Big_Real'(2.5),      "any = big_real");
+      Assert (Big_Real'(2.5) = R,      "big_real = any");
+      Assert (not (R = Big_Real'(3.0)), "any /= different big_real");
+   end;
 end Yeison_12_Tests.Vector_Operations;
