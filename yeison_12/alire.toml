@@ -13,7 +13,7 @@ website = "https://github.com/mosteo/yeison"
 "*".ada_version = "Ada12"
 
 [[depends-on]]
-gnat = "<13.2 | >=13.3" # Known bug with finalization at lib level
+# gnat = "<13.2 | >=13.3" # Known bug with finalization at lib level
 
 [test]
 runner = "alire"

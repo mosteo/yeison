@@ -16,6 +16,7 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
         gnat_version: [12, 13, 14, 15]
         # Pre -12 don't support Ada 2022
+        # 13.2 is buggy w.r.t. to finalization
         exclude:
           # Some combos are not supported due to missing pieces in the toolchain
           # No builds of gcc-10, -11, -12 that work on arm64

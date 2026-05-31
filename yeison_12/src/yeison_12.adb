@@ -477,6 +477,9 @@ package body Yeison_12 is
         new Ada.Unchecked_Deallocation (Any_Impl, Any_Impl_Ptr);
    begin
       Free (This.Impl);
+   exception
+      when others =>
+         raise;
    end Finalize;
 
    ------------
