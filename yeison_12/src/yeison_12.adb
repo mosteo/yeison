@@ -481,14 +481,17 @@ package body Yeison_12 is
       Free (This.Impl);
    exception
       when others =>
-         --  GNAT 13.2 has a finalization bug; suppress spurious exceptions
+         --  GNAT 12/13 has a finalization bug; suppress spurious exceptions
          --  raised during deallocation when built with that compiler. This is
          --  probably a bad idea, it would be better to avoid that compiler
          --  entirely...
          declare
             V : constant String := Compiler_Version.Version;
          begin
-            if V'Length < 4 or else V (V'First .. V'First + 3) /= "13.2" then
+            if V'Length < 2 or else
+              (V (V'First .. V'First + 1) /= "12" and then
+               V (V'First .. V'First + 1) /= "13")
+            then
                raise;
             end if;
          end;
