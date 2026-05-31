@@ -14,7 +14,10 @@ website = "https://github.com/mosteo/yeison"
 
 [[depends-on]]
 # gnat = "<13.2 | >=13.3" # Known bug with finalization at lib level
-yeison_12 = "*"
+yeison_12 = "*" # Only for the type-agnostic Yeison_Utils
 
 [[pins]]
 yeison_12 = { path='../yeison_12' }
+
+[test]
+runner = "alire"
