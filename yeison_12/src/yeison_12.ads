@@ -270,18 +270,18 @@ package Yeison_12 with Preelaborate is
             and then Pos.Kind in Scalar_Kinds | Vec_Kind;
    --  Always returns a copy; for in-place modification use Reference
 
-   --  Constant indexing. All overloads return the element BY VALUE (a copy): a
-   --  uniform return type is required for the cursor overload, which drives
-   --  "for E of X". By value is fine since a constant-indexing result is
-   --  read-only anyway.
+   --  Constant indexing. All overloads return a read-only view (Const) of the
+   --  designated element rather than a copy, so that "for E of X" and explicit
+   --  constant indexing do not materialize premature copies. A uniform return
+   --  type is required for the cursor overload, which drives "for E of X".
 
-   function Constant_Reference (This : Any; Pos : Any) return Any with
+   function Constant_Reference (This : Any; Pos : Any) return Const with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
 
-   function Constant_Reference (This : Any; Pos : UTF_8_String) return Any with
+   function Constant_Reference (This : Any; Pos : UTF_8_String) return Const with
      Pre => This.Kind = Map_Kind;
 
-   function Constant_Reference (This : Any; Pos : Big_Int) return Any with
+   function Constant_Reference (This : Any; Pos : Big_Int) return Const with
      Pre => This.Kind in Composite_Kinds;
 
    ---------------
@@ -304,7 +304,7 @@ package Yeison_12 with Preelaborate is
    --  Default_Iterator: enables "for E of X loop ..." over a map (values) or
    --  vector. Constant_Indexing below supplies the element.
 
-   function Constant_Reference (This : Any; Pos : Cursor) return Any;
+   function Constant_Reference (This : Any; Pos : Cursor) return Const;
    --  Cursor indexing for "for E of X" over a constant container.
 
    function Reference (This : in out Any; Pos : Cursor) return Ref;
