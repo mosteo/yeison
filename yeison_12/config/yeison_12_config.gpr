@@ -15,18 +15,11 @@ abstract project Yeison_12_Config is
            ,"-gnatn" -- Enable inlining
            ,"-ffunction-sections" -- Separate ELF section for each function
            ,"-fdata-sections" -- Separate ELF section for each variable
-           ,"-g" -- Generate debug info
-           ,"-gnato" -- Enable numeric overflow checking
-           ,"-gnatwa" -- Enable all warnings
-           ,"-gnatw.X" -- Disable warnings for No_Exception_Propagation
-           ,"-gnatVa" -- All validity checks
-           ,"-gnatwe" -- Warnings as errors
-           ,"-gnata" -- Enable assertions and contracts
            ,"-gnat12" -- Ada 2012 Mode
            ,"-gnatW8" -- UTF-8 encoding for wide characters
           );
 
    type Build_Profile_Kind is ("release", "validation", "development");
-   Build_Profile : Build_Profile_Kind := "validation";
+   Build_Profile : Build_Profile_Kind := "release";
 
 end Yeison_12_Config;
