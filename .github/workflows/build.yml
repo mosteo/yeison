@@ -14,9 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        gnat_version: [12, 13, 14, 15]
-        # Pre -12 don't support Ada 2022
-        # 13.2 is buggy w.r.t. to finalization
+        gnat_version: [13, 14, 15]
+        # Pre -12 don't support Ada 2022.
+        # 12 dies with bug box in some Yeison 22 tests.
+        # 13.x is buggy w.r.t. to finalization.
         # When 16 is added here: re-test combined named+unnamed container
         # aggregates (single type with both Add_Unnamed and Add_Named). Rejected
         # by 14.2/15.2 ("conflicting operations for aggregate, RM 4.3.5"); if 16
