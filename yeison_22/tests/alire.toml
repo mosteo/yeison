@@ -1,0 +1,16 @@
+name = "yeison_tests"
+description = "Tests for the built-in Alire test runner"
+version = "0.0.0-test"
+
+[build-switches]
+"*".ada_version = "Ada2022"
+
+[[depends-on]]
+yeison = "*"
+
+[[pins]]
+yeison = { path = ".." }
+
+[build-profiles]
+yeison       = "validation"
+yeison_tests = "validation"
