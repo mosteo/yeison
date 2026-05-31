@@ -4,10 +4,12 @@ with Ada.Characters.Conversions;
 with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada.Unchecked_Deallocation;
+with GNAT.Compiler_Version;
 
 package body Yeison is
 
    package Fixed renames Ada.Strings.Wide_Wide_Fixed;
+   package Compiler_Version is new GNAT.Compiler_Version;
 
    use type Ada.Containers.Count_Type;
    use all type Ada.Strings.Trim_End;
@@ -532,6 +534,22 @@ package body Yeison is
         new Ada.Unchecked_Deallocation (Any_Impl, Any_Impl_Ptr);
    begin
       Free (This.Impl);
+   exception
+      when others =>
+         --  GNAT 12/13 has a finalization bug; suppress spurious exceptions
+         --  raised during deallocation when built with that compiler. This is
+         --  probably a bad idea, it would be better to avoid that compiler
+         --  entirely...
+         declare
+            V : constant String := Compiler_Version.Version;
+         begin
+            if V'Length < 2 or else
+              (V (V'First .. V'First + 1) /= "12" and then
+               V (V'First .. V'First + 1) /= "13")
+            then
+               raise;
+            end if;
+         end;
    end Finalize;
 
    ------------

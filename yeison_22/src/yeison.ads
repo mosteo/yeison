@@ -94,10 +94,13 @@ package Yeison with Preelaborate is
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str  is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
-   subtype Map  is Any with
-     Dynamic_Predicate => Map.Kind in Nil_Kind | Map_Kind;
-   subtype Vec  is Any with
-     Dynamic_Predicate => Vec.Kind in Nil_Kind | Vec_Kind;
+   subtype Vec  is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
+   --  Map cannot carry a Dynamic_Predicate: it is the container-Aggregate
+   --  target, and GNAT default-initializes the aggregate's temporary as Map
+   --  (Nil, before Empty/Add_Named run) and checks the predicate on it, which
+   --  either fails (strict) or crashes finalization (Nil-tolerant). So Map is a
+   --  plain documentation subtype; its Map_Kind is guaranteed by construction.
+   subtype Map  is Any;
 
    type Any_Array is array (Positive range <>) of Any;
 

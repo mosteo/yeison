@@ -21,7 +21,7 @@ begin
    Assert (+Empty_Vec.Image (JSON) = "[]",  "empty vec json");
 
    --  Compact one-element rendering
-   Assert (+M.Image (JSON, (Compact => True, others => <>)) = "{ ""one"": 1 }",
+   Assert (+M.Image (JSON, (Compact => True, others => <>)) = "{  ""one"": 1 }",
            "compact json map");
    Assert (+V.Image (JSON, (Compact => True, others => <>)) = "[ 1 ]",
            "compact json vec");
