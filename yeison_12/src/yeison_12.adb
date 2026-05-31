@@ -45,6 +45,10 @@ package body Yeison_12 is
    is (This.Data.Real);
    function As_Text (This : Scalar) return Text is (S (This.Data.Str));
 
+   function Image (This   : Scalar;
+                   Format : Image_Formats := Ada_Like) return Text
+   is (Make.Scalar (This).Image (Format));
+
    package body Scalars is
 
       function New_Bool (Val : Boolean) return Scalar
@@ -176,6 +180,21 @@ package body Yeison_12 is
    function "=" (L : Any; R : Text) return Boolean
    is (L.Kind = Str_Kind and then L.As_Text = R);
 
+   function "=" (L : Text;    R : Any)     return Boolean is (R = L);
+   function "=" (L : Any;     R : Big_Int) return Boolean
+   is (L.Kind = Int_Kind and then L.As_Int = R);
+   function "=" (L : Big_Int;  R : Any)     return Boolean is (R = L);
+
+   function "=" (L : Any;      R : Big_Real) return Boolean is
+      use type Reals.General_Real;
+   begin
+      return L.Kind = Real_Kind and then L.As_Real = Reals.New_Real (R);
+   end "=";
+   function "=" (L : Big_Real; R : Any)      return Boolean is (R = L);
+
+   function Is_True  (This : Any) return Boolean is (This.As_Bool);
+   function Is_False (This : Any) return Boolean is (not This.As_Bool);
+
    ---------
    -- "<" --
    ---------
@@ -204,6 +223,17 @@ package body Yeison_12 is
 
    function As_Real (This : Any) return Reals.General_Real
    is (This.Impl.Val.Real);
+
+   function As_Real_Float (This : Any) return Big_Real is
+      use type Reals.Classes;
+      General : Reals.General_Real renames This.Impl.Val.Real;
+   begin
+      if General.Class /= Reals.Finite then
+         raise Constraint_Error
+           with "non-finite real value has no Big_Real representation";
+      end if;
+      return General.Value;
+   end As_Real_Float;
 
    function As_Text (This : Any) return Text is (S (This.Impl.Val.Str));
 
@@ -844,6 +874,23 @@ package body Yeison_12 is
    function Element (This : Any; Pos : Cursor) return Any
    is (Constant_Reference (This, Pos));
 
+   ---------
+   -- Key --
+   ---------
+
+   function Key (This : Any; Pos : Cursor) return Any is
+      pragma Unreferenced (This);
+   begin
+      case Pos.Kind is
+         when Map_Cursor =>
+            return Any_Maps.Key (Pos.Map_Pos);
+         when Vec_Cursor =>
+            raise Constraint_Error with "Key called on a vector cursor";
+         when Invalid =>
+            raise Constraint_Error with "Key called on an invalid cursor";
+      end case;
+   end Key;
+
    ----------
    -- Next --
    ----------
@@ -928,9 +975,15 @@ package body Yeison_12 is
       is (Any_Parent with Impl =>
              new Any_Impl'(Real_Kind, (Real_Kind, This)));
 
+      function Real (This : Big_Real) return Any
+      is (Real (Reals.New_Real (This)));
+
       function Str (This : Text) return Any
       is (Any_Parent with Impl =>
              new Any_Impl'(Str_Kind, (Str_Kind, U (This))));
+
+      function Map return Any renames Yeison_12.Empty_Map;
+      function Vec return Any renames Yeison_12.Empty_Vec;
 
    end Make;
 

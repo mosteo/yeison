@@ -43,4 +43,14 @@ begin
       Assert (V (1).As_Int = 1,           "mixed /: int element");
       Assert (V (2).As_Text = "hello",    "mixed /: str element");
    end;
+
+   --  '+' for Boolean
+   declare
+      T : constant Any := +True;
+      F : constant Any := +False;
+   begin
+      Assert (T.Kind = Bool_Kind, "+True: kind");
+      Assert (T.As_Bool = True,   "+True: value");
+      Assert (F.As_Bool = False,  "+False: value");
+   end;
 end Yeison_12_Tests.Slash_Operator;

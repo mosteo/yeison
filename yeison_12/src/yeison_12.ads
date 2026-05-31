@@ -72,7 +72,12 @@ package Yeison_12 with Preelaborate is
    --  Input_Options), crashing at library finalization.
 
    function "=" (L, R : Any) return Boolean;
-   function "=" (L : Any; R : Text) return Boolean;
+   function "=" (L : Any;     R : Text)    return Boolean;
+   function "=" (L : Text;    R : Any)     return Boolean;
+   function "=" (L : Any;     R : Big_Int) return Boolean;
+   function "=" (L : Big_Int;  R : Any)     return Boolean;
+   function "=" (L : Any;      R : Big_Real) return Boolean;
+   function "=" (L : Big_Real; R : Any)      return Boolean;
 
    function "<" (L, R : Any) return Boolean;
    function Precedes (L, R : Any) return Boolean renames "<";
@@ -81,6 +86,7 @@ package Yeison_12 with Preelaborate is
    subtype Int  is Any with Dynamic_Predicate => Int.Kind = Int_Kind;
    subtype Real is Any with Dynamic_Predicate => Real.Kind = Real_Kind;
    subtype Str  is Any with Dynamic_Predicate => Str.Kind = Str_Kind;
+   subtype Map  is Any with Dynamic_Predicate => Map.Kind = Map_Kind;
    subtype Vec  is Any with Dynamic_Predicate => Vec.Kind = Vec_Kind;
 
    type Any_Array is array (Positive range <>) of Any;
@@ -106,7 +112,11 @@ package Yeison_12 with Preelaborate is
 
    function Kind (This : Any) return Kinds;
 
-   function Is_Nil (This : Any) return Boolean is (This.Kind = Nil_Kind);
+   function Is_Nil   (This : Any) return Boolean is (This.Kind = Nil_Kind);
+   function Is_True  (This : Any) return Boolean with Pre => This.Kind = Bool_Kind;
+   --  Raises Assertion_Error (or Constraint_Error in contracts-off mode) if
+   --  This is not a Bool_Kind value.
+   function Is_False (This : Any) return Boolean with Pre => This.Kind = Bool_Kind;
 
    ---------------
    --  Scalars  --
@@ -122,6 +132,9 @@ package Yeison_12 with Preelaborate is
    function As_Integer (This : Scalar) return Big_Int;
    function As_Real    (This : Scalar) return Reals.General_Real;
    function As_Text    (This : Scalar) return Text;
+
+   function Image (This   : Scalar;
+                   Format : Image_Formats := Ada_Like) return Text;
 
    package Scalars is
       function New_Bool (Val : Boolean)            return Scalar;
@@ -143,6 +156,12 @@ package Yeison_12 with Preelaborate is
 
    function As_Real (This : Any) return Reals.General_Real
      with Pre => This.Kind = Real_Kind;
+
+   function As_Real_Float (This : Any) return Big_Real
+     with Pre => This.Kind = Real_Kind;
+   --  Convenience: directly extract the underlying Big_Real without going
+   --  through Reals.General_Real.  Raises Constraint_Error for non-finite
+   --  values (Inf/NaN) that have no Big_Real representation.
 
    function As_Text (This : Any) return Text
      with Pre => This.Kind = Str_Kind;
@@ -167,7 +186,8 @@ package Yeison_12 with Preelaborate is
    function Is_Empty (This : Any) return Boolean with
      Pre => This.Is_Nil or else This.Kind in Composite_Kinds;
 
-   function Length (This : Any) return Universal_Integer;
+   function Length (This : Any) return Universal_Integer with
+     Pre => This.Kind in Composite_Kinds;
 
    ------------
    --  Maps  --
@@ -187,9 +207,6 @@ package Yeison_12 with Preelaborate is
                     Replace : Boolean := False)
                     return Any;
    --  Returns a *copy* with the new inserted value
-
-   function Map (This : Any) return Any is (This) with Inline;
-   --  A pass-through to help with disambiguation and esthetics
 
    function Keys (This : Any; Ordered : Boolean := False) return Any with
      Pre  => This.Kind = Map_Kind,
@@ -298,6 +315,10 @@ package Yeison_12 with Preelaborate is
 
    function Element (This : Any; Pos : Cursor) return Any;
 
+   function Key (This : Any; Pos : Cursor) return Any;
+   --  The map key at the given cursor position; raises Constraint_Error if Pos
+   --  is not a map cursor. This mirrors Element, which returns the value.
+
    package Iteration is new Ada.Iterator_Interfaces (Cursor, Has_Element);
 
    function Iterate (This : Any) return Iteration.Forward_Iterator'Class;
@@ -324,9 +345,14 @@ package Yeison_12 with Preelaborate is
       function Bool (This : Boolean)            return Any;
       function Int  (This : Big_Int)            return Any;
       function Real (This : Reals.General_Real) return Any;
+      function Real (This : Big_Real)           return Any;
+      --  Convenience overload: wraps Big_Real in a finite General_Real
       function Str  (This : Text)               return Any;
 
       function Scalar (This : Yeison_12.Scalar) return Any;
+
+      function Map return Any;
+      function Vec return Any;
    end Make;
 
    function True  return Any renames Make.True;
@@ -338,9 +364,9 @@ package Yeison_12 with Preelaborate is
 
    package Operators is
 
+      function "+" (This : Boolean)  return Any renames Make.Bool;
       function "+" (This : Big_Int)  return Any renames Make.Int;
-      function "+" (This : Big_Real) return Any is
-        (Make.Real (Reals.New_Real (This)));
+      function "+" (This : Big_Real) return Any renames Make.Real;
       function "+" (This : Text)     return Any renames Make.Str;
 
       function "/" (L, R : Any) return Any with
