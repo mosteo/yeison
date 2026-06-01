@@ -26,8 +26,7 @@ It comes in two independent implementations:
 ## Values and initialization
 
 Scalars come straight from literals; maps use `[key => value]` aggregates and
-vectors use `+[...]` (until AI22-0134-1 is implemented, when the "+" will be no
-longer needed):
+vectors use `+[...]`:
 
 ```Ada
 with Yeison;           use Yeison;
