@@ -264,21 +264,11 @@ package body Yeison is
    -- "-" --
    ---------
 
-   function Negate (R : Reals.General_Real) return Reals.General_Real is
-      use all type Reals.Classes;
-   begin
-      case R.Class is
-         when Finite   => return Reals.New_Real (-R.Value);
-         when Infinite => return Reals.New_Infinite (not R.Positive);
-         when NaN      => return Reals.New_NaN;
-      end case;
-   end Negate;
-
    function "-" (Right : Any) return Any is
    begin
       case Right.Kind is
          when Int_Kind  => return New_Int (-Right.As_Int);
-         when Real_Kind => return New_Real (Negate (Right.As_Real));
+         when Real_Kind => return New_Real (Reals.Negate (Right.As_Real));
          when others    =>
             raise Constraint_Error
               with "cannot negate a " & Right.Kind'Image & " value";
@@ -321,13 +311,6 @@ package body Yeison is
    function Last_Index (This : Any) return Universal_Integer
    is (Universal_Integer (This.Impl.Vec.Last_Index));
 
-   ----------------
-   -- JSON_Quote --
-   ----------------
-
-   function JSON_Quote (Str : Text) return Text
-   is ('"' & Yeison_Utils.JSON_Escape (Str) & '"');
-
    -----------
    -- Image --
    -----------
@@ -357,7 +340,8 @@ package body Yeison is
                    when Ada_Like =>
                       To_Wide_Wide_String (This.Impl.Val.Str),
                    when JSON     =>
-                      JSON_Quote (To_Wide_Wide_String (This.Impl.Val.Str))),
+                      Yeison_Utils.JSON_Quote
+                        (To_Wide_Wide_String (This.Impl.Val.Str))),
              when Nonscalar_Kinds =>
                 raise Program_Error with "not a scalar: " & This.Kind'Image
          );
