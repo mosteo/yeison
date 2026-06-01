@@ -69,6 +69,7 @@ package Yeison_12 with Preelaborate is
    --  Any that add controlled components (e.g. LML.Options.Pragmas.
    --  Input_Options), crashing at library finalization.
 
+   overriding
    function "=" (L, R : Any) return Boolean;
    function "=" (L : Any;     R : Text)    return Boolean;
    function "=" (L : Text;    R : Any)     return Boolean;
@@ -116,10 +117,12 @@ package Yeison_12 with Preelaborate is
    function Kind (This : Any) return Kinds;
 
    function Is_Nil   (This : Any) return Boolean is (This.Kind = Nil_Kind);
-   function Is_True  (This : Any) return Boolean with Pre => This.Kind = Bool_Kind;
+   function Is_True  (This : Any) return Boolean
+     with Pre => This.Kind = Bool_Kind;
    --  Raises Assertion_Error (or Constraint_Error in contracts-off mode) if
    --  This is not a Bool_Kind value.
-   function Is_False (This : Any) return Boolean with Pre => This.Kind = Bool_Kind;
+   function Is_False (This : Any) return Boolean
+     with Pre => This.Kind = Bool_Kind;
 
    ---------------
    --  Scalars  --
@@ -298,8 +301,8 @@ package Yeison_12 with Preelaborate is
    function Constant_Reference (This : Any; Pos : Any) return Const with
      Pre => Pos.Kind in Scalar_Kinds | Vec_Kind;
 
-   function Constant_Reference (This : Any; Pos : UTF_8_String) return Const with
-     Pre => This.Kind = Map_Kind;
+   function Constant_Reference (This : Any; Pos : UTF_8_String) return Const
+     with Pre => This.Kind = Map_Kind;
 
    function Constant_Reference (This : Any; Pos : Big_Int) return Const with
      Pre => This.Kind in Composite_Kinds;

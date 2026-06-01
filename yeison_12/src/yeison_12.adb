@@ -174,6 +174,7 @@ package body Yeison_12 is
    -- "=" --
    ---------
 
+   overriding
    function "=" (L, R : Any) return Boolean
    is (L.Impl.all = R.Impl.all);
 
