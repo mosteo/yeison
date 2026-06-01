@@ -16,6 +16,10 @@ package Yeison_Utils with Preelaborate is
    --  Prepare a string for storage in JSON format. Does not add enclosing
    --  quotes!
 
+   function JSON_Quote (Str : Text) return Text
+   is ('"' & JSON_Escape (Str) & '"');
+   --  JSON_Escape plus the enclosing double quotes.
+
    function YAML_Double_Quote_Escape (Str : Text) return Text;
    --  Escapes for YAML output in a doubly-quoted string: "example". The string
    --  is quoted even when no escaping is necessary, to avoid confusing cases
@@ -36,6 +40,7 @@ package Yeison_Utils with Preelaborate is
       type Real is private;
       with function "<" (L, R : Real) return Boolean is <>;
       with function Image (R : Real) return Text is <>;
+      with function "-" (R : Real) return Real is <>;
    package General_Reals is
 
       type Classes is (Finite, Infinite, NaN);
@@ -69,6 +74,17 @@ package Yeison_Utils with Preelaborate is
 
       function New_NaN return General_Real is (Class => NaN);
 
+      ------------
+      -- Negate --
+      ------------
+
+      function Negate (R : General_Real) return General_Real
+      is (case R.Class is
+             when Finite   => New_Real (-R.Value),
+             when Infinite => New_Infinite (not R.Positive),
+             when NaN      => New_NaN);
+      --  Sign flip that preserves the non-finite classes.
+
       ---------
       -- "<" --
       ---------
@@ -101,5 +117,17 @@ package Yeison_Utils with Preelaborate is
              "-inf");
 
    end General_Reals;
+
+   ---------------
+   -- Big_Reals --
+   ---------------
+
+   --  The reals instance shared by both Yeison crates. Big_Real is
+   --  Long_Long_Float in both, so the instance lives here once.
+
+   function Nicer_Image (R : Long_Long_Float) return Text
+   is (Nicer_Real_Image (R'Wide_Wide_Image));
+
+   package Big_Reals is new General_Reals (Long_Long_Float, "<", Nicer_Image);
 
 end Yeison_Utils;

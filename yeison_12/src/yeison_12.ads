@@ -22,10 +22,8 @@ package Yeison_12 with Preelaborate is
    subtype Universal_Integer is Long_Long_Integer;
    --  The widest integer we represent; doubles as vector index base.
 
-   function Nicer_Image (R : Big_Real) return Wide_Wide_String;
-   --  Avoid scientific notation when easy to do so
-
-   package Reals is new Yeison_Utils.General_Reals (Big_Real, "<", Nicer_Image);
+   package Reals renames Yeison_Utils.Big_Reals;
+   --  Shared instance; Big_Real is Long_Long_Float, same as the other crate.
 
    subtype Text         is Wide_Wide_String;
    subtype UTF_8_String is String;
@@ -464,12 +462,5 @@ private
 
    overriding function Next (Object   : Iterator;
                              Position : Cursor) return Cursor;
-
-   -----------------
-   -- Nicer_Image --
-   -----------------
-
-   function Nicer_Image (R : Big_Real) return Wide_Wide_String
-   is (Yeison_Utils.Nicer_Real_Image (R'Wide_Wide_Image));
 
 end Yeison_12;
