@@ -206,6 +206,28 @@ package Yeison with Preelaborate is
    function Length (This : Any) return Universal_Integer with
      Pre => This.Kind in Composite_Kinds;
 
+   procedure Clear (This : in out Any) with
+     Pre  => This.Kind in Composite_Kinds,
+     Post => This.Is_Empty;
+   --  Remove all elements, preserving the container kind (map or vector).
+
+   procedure Delete (This : in out Any; Pos : Any) with
+     Pre => This.Kind in Composite_Kinds and then Pos.Kind in Scalar_Kinds;
+   --  Remove a map entry by key, or a vector element by (integer) index.
+   --  Remaining vector elements shift down to keep the vector 1-based and
+   --  contiguous. Raises Constraint_Error if the key/index is absent or out
+   --  of range, or if Pos is a non-integer index into a vector.
+
+   function Delete (This : Any; Pos : Any) return Any with
+     Pre  => This.Kind in Composite_Kinds and then Pos.Kind in Scalar_Kinds,
+     Post => Delete'Result.Kind = This.Kind;
+   --  Returns a *copy* with the entry/element removed.
+
+   function Contains (This : Any; Elem : Any) return Boolean with
+     Pre => This.Kind in Composite_Kinds;
+   --  Value membership: True if some vector element, or some map value,
+   --  equals Elem. (For key membership in a map, use Has_Key.)
+
    ------------
    --  Maps  --
    ------------
@@ -249,6 +271,13 @@ package Yeison with Preelaborate is
 
    function Append (This : Any; Elem : Any) return Any with
      Pre => This.Kind = Vec_Kind;
+
+   procedure Prepend (This : in out Any; Elem : Any) with
+     Pre => This.Kind = Vec_Kind;
+
+   function Prepend (This : Any; Elem : Any) return Any with
+     Pre  => This.Kind = Vec_Kind,
+     Post => Prepend'Result.Length = This.Length + 1;
 
    function First_Index (This : Any) return Universal_Integer with
      Pre => This.Kind = Vec_Kind;

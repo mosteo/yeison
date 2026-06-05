@@ -171,4 +171,36 @@ begin
       Assert (Big_Real'(2.5) = R,      "big_real = any");
       Assert (not (R = Big_Real'(3.0)), "any /= different big_real");
    end;
+
+   --  Prepend (procedural and functional)
+   declare
+      V : Any := Empty_Vec.Append (+2).Append (+3);
+   begin
+      V.Prepend (+1);
+      Assert (V.Length = 3,          "prepended length");
+      Assert (V (1).As_Int = 1,      "prepended at front");
+      Assert (V (2).As_Int = 2,      "old front shifted");
+
+      declare
+         V0 : constant Any := V.Prepend (+0);
+      begin
+         Assert (V0.Length = 4,      "functional prepend copy");
+         Assert (V0 (1).As_Int = 0,  "functional prepend front");
+         Assert (V.Length = 3,       "original unchanged by prepend");
+      end;
+
+      --  Text overload
+      V.Prepend ("front");
+      Assert (V (1).As_Text = "front", "prepend text overload");
+   end;
+
+   --  Contains
+   declare
+      V : constant Any := Empty_Vec.Append (+1).Append (+"two").Append (+3.0);
+   begin
+      Assert (V.Contains (+1),        "contains int element");
+      Assert (V.Contains (+"two"),    "contains str element");
+      Assert (V.Contains (+3.0),      "contains real element");
+      Assert (not V.Contains (+99),   "does not contain absent");
+   end;
 end Yeison_12_Tests.Vector_Operations;

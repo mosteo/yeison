@@ -561,6 +561,52 @@ package body Yeison_12 is
    function Append (This : Any; Str : Text) return Any
    is (This.Append (Make.Str (Str)));
 
+   -------------
+   -- Prepend --
+   -------------
+
+   procedure Prepend (This : in out Any; Elem : Any) is
+   begin
+      This.Impl.Vec.Prepend (Elem);
+   end Prepend;
+
+   function Prepend (This : Any; Elem : Any) return Any is
+   begin
+      return Result : Any := This do
+         Result.Prepend (Elem);
+      end return;
+   end Prepend;
+
+   procedure Prepend (This : in out Any; Str : Text) is
+   begin
+      This.Prepend (Make.Str (Str));
+   end Prepend;
+
+   function Prepend (This : Any; Str : Text) return Any
+   is (This.Prepend (Make.Str (Str)));
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This : Any; Elem : Any) return Boolean is
+   begin
+      case This.Kind is
+         when Vec_Kind =>
+            return This.Impl.Vec.Contains (Elem);
+         when Map_Kind =>
+            for Val of This.Impl.Map loop
+               if Val = Elem then
+                  return True;
+               end if;
+            end loop;
+            return False;
+         when others =>
+            raise Constraint_Error
+              with "not a collection: " & This.Kind'Image;
+      end case;
+   end Contains;
+
    -----------------
    -- Insert_Impl --
    -----------------
@@ -604,6 +650,80 @@ package body Yeison_12 is
          Result.Insert (Key, Value, Replace);
       end return;
    end Insert;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (This : in out Any) is
+   begin
+      case This.Kind is
+         when Map_Kind =>
+            This.Impl.Map.Clear;
+            This.Impl.Keys.Clear;
+         when Vec_Kind =>
+            This.Impl.Vec.Clear;
+         when others =>
+            raise Constraint_Error
+              with "not a collection: " & This.Kind'Image;
+      end case;
+   end Clear;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete (This : in out Any; Pos : Any) is
+   begin
+      case This.Kind is
+         when Map_Kind =>
+            if not This.Impl.Map.Contains (Pos) then
+               raise Constraint_Error
+                 with "no such key: " & Yeison_Utils.Encode (Pos.Image);
+            end if;
+
+            This.Impl.Map.Delete (Pos);
+
+            --  Drop the key from the insertion-order vector too
+            for I in This.Impl.Keys.First_Index .. This.Impl.Keys.Last_Index
+            loop
+               if This.Impl.Keys (I) = Pos then
+                  This.Impl.Keys.Delete (I);
+                  exit;
+               end if;
+            end loop;
+
+         when Vec_Kind =>
+            if Pos.Kind /= Int_Kind then
+               raise Constraint_Error
+                 with "vector index must be an integer, got " & Pos.Kind'Image;
+            end if;
+
+            declare
+               Index : constant Universal_Integer := Pos.As_Int;
+            begin
+               if Index < 1
+                 or else Index > Universal_Integer (This.Impl.Vec.Length)
+               then
+                  raise Constraint_Error
+                    with "vector index out of range:" & Index'Image;
+               end if;
+
+               This.Impl.Vec.Delete (Index);
+            end;
+
+         when others =>
+            raise Constraint_Error
+              with "not a collection: " & This.Kind'Image;
+      end case;
+   end Delete;
+
+   function Delete (This : Any; Pos : Any) return Any is
+   begin
+      return Result : Any := This do
+         Result.Delete (Pos);
+      end return;
+   end Delete;
 
    ----------
    -- Keys --

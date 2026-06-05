@@ -85,6 +85,29 @@ begin
 end;
 ```
 
+Entries are removed with `Delete` (a map key or a vector index; vector
+elements shift down to stay contiguous) and a whole container is emptied in
+place with `Clear`:
+
+```Ada
+M.Delete ("name");       -- drop a map entry by key
+M ("versions").Delete (4);  -- drop a vector element by index
+M.Clear;                 -- empty the map, keeping it a map
+```
+
+Both `Delete` forms come in a procedural (in-place) and a functional variant;
+the latter returns a modified copy and leaves the original untouched.
+
+Vectors additionally support `Append` and `Prepend` (each in-place and
+functional). `Contains` tests value membership for either kind — vector
+elements or map values — while `Has_Key` tests map keys:
+
+```Ada
+V.Prepend (0);                       -- add at the front
+pragma Assert (V.Contains (2));      -- a vector element
+pragma Assert (M.Contains ("alr"));  -- a map value (Has_Key tests keys)
+```
+
 Iteration uses the standard `for ... of` loop, and any value renders as Ada-like
 or JSON text:
 

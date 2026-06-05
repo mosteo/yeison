@@ -1,8 +1,9 @@
 name = "yeison"
 description = "A JSON-like data structure using Ada 2022 features"
-version = "0.2.0-dev"
-licenses = "MIT"
+version = "0.3.1"
+# 0.3.1: feature complete (only merge missing)
 
+licenses = "MIT"
 authors = ["Alejandro R. Mosteo"]
 maintainers = ["Alejandro R. Mosteo <alejandro@mosteo.com>"]
 maintainers-logins = ["mosteo"]

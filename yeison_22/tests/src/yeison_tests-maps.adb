@@ -41,4 +41,14 @@ begin
       Assert (V.Length = 2,         "in-place insert");
       Assert (V ("b").As_Int = 2,   "in-place value");
    end;
+
+   --  Contains tests value membership (not keys; use Has_Key for keys)
+   declare
+      M : constant Any := ["one" => 1, "two" => "dos"];
+   begin
+      Assert (M.Contains (1),         "map contains value 1");
+      Assert (M.Contains ("dos"),     "map contains value dos");
+      Assert (not M.Contains ("one"), "a key is not a value");
+      Assert (not M.Contains (99),    "absent value");
+   end;
 end Yeison_Tests.Maps;

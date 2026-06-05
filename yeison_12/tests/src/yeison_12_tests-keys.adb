@@ -50,4 +50,15 @@ begin
    Test_Map.Insert (+"UTF8-test", +"utf8 value");
    Assert (Test_Map.Has_Key ("UTF8-test"),
            "Has_Key should handle simple ASCII characters");
+
+   --  Contains tests value membership (not keys; use Has_Key for keys)
+   declare
+      M : constant Any :=
+        Empty_Map.Insert (+"one", +1).Insert (+"two", +"dos");
+   begin
+      Assert (M.Contains (+1),         "map contains value 1");
+      Assert (M.Contains (+"dos"),     "map contains value dos");
+      Assert (not M.Contains (+"one"), "a key is not a value");
+      Assert (not M.Contains (+99),    "absent value");
+   end;
 end Yeison_12_Tests.Keys;

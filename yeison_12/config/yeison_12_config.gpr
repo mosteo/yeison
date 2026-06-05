@@ -7,7 +7,7 @@ abstract project Yeison_12_Config is
 
    Alire_Host_Arch := "x86_64";
 
-   Alire_Host_Distro := "ubuntu";
+   Alire_Host_Distro := "suse";
    Ada_Compiler_Switches := External_As_List ("ADAFLAGS", " ");
    Ada_Compiler_Switches := Ada_Compiler_Switches &
           (
